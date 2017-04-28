@@ -1,0 +1,113 @@
+<resources>
+    <string name="app_name">Logger Companion</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_mainMenu">Main Menu</string>
+    <string name="title_activity_main">Logger Companion</string>
+    <string name="google_maps_key">AIzaSyCMF0tjP-gP-mRVHUNu3UX7re7BZ2y3154</string>
+
+    <!-- Settings Activity -->
+    <string name="btn_clear_data">Clear local data</string>
+    <string name="btn_retrieveSummary">Update Tracker Summary</string>
+    <string name="btn_viewEditDeviceSettings">Tracker settings</string>
+    <string name="lbl_deviceDBSize">Database Size: </string>
+    <string name="lbl_deviceDBPointCount">GPS point count: </string>
+    <string name="lbl_deviceDBStayCount">Stay point count </string>
+    <string name="lbl_deviceDBVisitCount">Stay point visit: </string>
+    <string name="lbl_deviceDBJourneyCount">Journey count: </string>
+    <string name="lbl_deviceDBLatest">Latest point: </string>
+    <string name="lbl_deviceDBOldest">Oldest point: </string>
+    <string name="lbl_deviceDBStayUpdate">Last stay update: </string>
+    <string name="lbl_deviceDBJourneyUpdate">Last journey update: </string>
+    <string name="lbl_defaultValue">-</string>
+
+    <!-- Device Settings Dialog -->
+    <string name="lbl_stayLength">Stay Length (minutes):</string>
+    <string name="lbl_stayRadius">Stay Radius (meters):</string>
+    <string name="lbl_journeyComp">Journey compression:</string>
+    <string name="lbl_minJourney">Min Journey (minutes):</string>
+
+    <!-- Device choose Dialog -->
+    <string name="btn_confirmChoose">Choose</string>
+    <string name="lbl_currentDevice">Current Logger:</string>
+    <string name="btn_discoverDevices">Not in list? Discovery devices</string>
+    <string name="btn_showChooser">Select Device</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Device settings Dialog -->
+    <string name="btn_updateSettings">Update Settings</string>
+
+    <!-- Filter Dates Dialog -->
+    <string name="btn_showOnMap">Show on Map</string>
+    <string name="btn_downloadDates">Download</string>
+    <string name="btn_filterMap">Filter</string>
+
+    <!-- Navbar -->
+    <string name="btn_recentData">Retrieve latest from Tracker</string>
+
+    <string name="lbl_stayPointCount">Stay Points:</string>
+    <string name="lbl_stayPointVisitCount">Stay Point Visits:</string>
+    <string name="lbl_journeyCount">Journeys:</string>
+    <string name="lbl_GPSPointCount">Total Points:</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Stay point info dialog -->
+    <string name="lbl_display_stay_point_list">View stay point info</string>
+    <string name="lbl_visitAmount">Visits:</string>
+    <string name="lbl_totalTimeSpent">Total Time:</string>
+    <string name="lbl_firstVisit">First Visit:</string>
+    <string name="lbl_lastVisit">Last Visit:</string>
+    <string name="lbl_averageVisit">Average Visit:</string>
+    <string name="btn_closeDialog">Close</string>
+
+    <!--  Journey Dialog -->
+    <string name="btn_journeySelectMode">Journey Select Mode</string>
+    <string name="lbl_selectResultHeader">Journey</string>
+    <string name="lbl_speedValues">Speed (mph):</string>
+    <string name="lbl_altitudeValues">Altitude (meters):</string>
+    <string name="lbl_timeDiffValues">diff +/-:</string>
+
+    <!-- Journey info dialog -->
+    <string name="lbl_journeyViewHeader">Journey info</string>
+    <string name="lbl_journeyAmount">Journeys:</string>
+    <string name="lbl_journeysTotalTime">Total Journey Time:</string>
+    <string name="lbl_firstJourney">First Journey:</string>
+    <string name="lbl_lastJourney">Last Journey:</string>
+    <string name="lbl_averageJourneyTime">Average Time:</string>
+    <string name="btn_closeJourneyDialog">Close</string>
+    <string name="btn_journeyDirectionOneWay">Direction one way</string>
+    <string name="btn_journeyDirectionBothWay">Direction both ways</string>
+
+
+    <string-array name="arr_lengthValues">
+        <item>1</item>
+        <item>2.5</item>
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>30</item>
+        <item>60</item>
+    </string-array>
+
+    <string-array name="arr_radiusValues">
+        <item>10</item>
+        <item>25</item>
+        <item>50</item>
+        <item>100</item>
+        <item>150</item>
+        <item>200</item>
+        <item>250</item>
+        <item>300</item>
+        <item>350</item>
+        <item>400</item>
+        <item>450</item>
+        <item>500</item>
+    </string-array>
+
+    <string-array name="arr_compValues">
+        <item>0.00004</item>
+    </string-array>
+
+</resources>

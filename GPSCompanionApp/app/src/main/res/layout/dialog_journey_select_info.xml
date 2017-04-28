@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView android:id="@+id/lbl_dialogHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" style="@style/Header"/>
+
+    <RelativeLayout  android:id="@+id/journeySummary"
+        android:layout_below="@id/lbl_dialogHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <View android:id="@+id/JourneyDummyView"
+        android:background="@color/black"
+        android:layout_width="0.1dp"
+        android:layout_height="0dp"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:text="@string/lbl_journeyAmount"
+        android:id="@+id/lbl_journeyAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/JourneyDummyView" style="@style/Label"/>
+    <TextView
+        android:id="@+id/lbl_journeyAmountValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/JourneyDummyView" style="@style/LabelValue"/>
+
+    <TextView
+        android:layout_toLeftOf="@id/JourneyDummyView"
+        android:text="@string/lbl_journeysTotalTime"
+        android:id="@+id/lbl_journeysTotalTime"
+        android:layout_below="@id/lbl_journeyAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/Label"/>
+    <TextView
+        android:layout_toRightOf="@id/JourneyDummyView"
+        android:id="@+id/lbl_journeysTotalTimeValue"
+        android:layout_below="@id/lbl_journeyAmountValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue"/>
+
+    <TextView android:id="@+id/lbl_lastJourney"
+        android:text="@string/lbl_lastJourney"
+        android:layout_below="@+id/lbl_journeysTotalTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/JourneyDummyView" style="@style/Label"/>
+    <TextView android:id="@+id/lbl_lastJourneyValue"
+        android:layout_below="@+id/lbl_journeysTotalTimeValue"
+        android:layout_toRightOf="@id/JourneyDummyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue" />
+
+    <TextView android:id="@+id/lbl_averageJourneyTime"
+        android:text="@string/lbl_averageJourneyTime"
+        android:layout_toLeftOf="@id/JourneyDummyView"
+        android:layout_below="@id/lbl_lastJourney"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/Label" />
+    <TextView android:id="@+id/lbl_averageJourneyTimeValue"
+        android:layout_toEndOf="@id/JourneyDummyView"
+        android:layout_toRightOf="@id/JourneyDummyView"
+        android:layout_below="@id/lbl_lastJourneyValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"  style="@style/LabelValue" />
+
+        <Button android:id="@+id/btn_toggleJourneyDirection"
+            android:layout_centerHorizontal="true"
+            android:text="@string/btn_journeyDirectionOneWay"
+            android:layout_below="@id/lbl_averageJourneyTimeValue"
+            android:drawableLeft="@drawable/journey_direction_one_way"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
+    <ExpandableListView android:id="@+id/exp_journeys"
+        android:layout_above="@+id/btn_closeJourneyInfoDialog"
+        android:layout_below="@id/journeySummary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Button android:id="@id/btn_closeJourneyInfoDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="@string/btn_closeDialog" />
+
+</RelativeLayout>

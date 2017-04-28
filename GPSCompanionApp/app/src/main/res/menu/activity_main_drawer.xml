@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/grp_serverRequest">
+        <item android:id="@+id/btn_retrieveLatestData"
+            android:icon="@drawable/vector_sync_black"
+            android:title="@string/btn_recentData"/>
+    </group>
+    
+    <group android:id="@+id/grp_localStats">
+        <item android:id="@+id/lbl_stayPointCount"
+            android:icon="@drawable/stay_point_black"
+            android:title="@string/lbl_stayPointCount"/>
+
+        <item android:id="@+id/lbl_stayPointVisitCount"
+            android:icon="@drawable/stay_visit_black"
+            android:title="@string/lbl_stayPointVisitCount"/>
+
+        <item android:id="@+id/lbl_journeyCount"
+            android:icon="@drawable/vector_timeline_active"
+            android:title="@string/lbl_journeyCount"/>
+
+        <item android:id="@+id/lbl_GPSPointCount"
+            android:icon="@drawable/gps_point_black"
+            android:title="@string/lbl_GPSPointCount"/>
+    </group>
+</menu>

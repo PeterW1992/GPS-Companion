@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView android:id="@+id/lbl_dialogHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" style="@style/Header"/>
+
+    <RelativeLayout  android:id="@+id/staySummary"
+        android:layout_below="@id/lbl_dialogHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    <View android:id="@+id/StayDummyView"
+        android:background="@color/black"
+        android:layout_width="0.1dp"
+        android:layout_height="0dp"
+        android:layout_centerHorizontal="true" />
+
+    <TextView
+        android:text="@string/lbl_visitAmount"
+        android:id="@+id/lbl_visitAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/StayDummyView" style="@style/Label"/>
+
+    <TextView
+        android:id="@+id/lbl_visitAmountValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/StayDummyView" style="@style/LabelValue"/>
+
+    <TextView
+        android:layout_toLeftOf="@id/StayDummyView"
+        android:text="@string/lbl_totalTimeSpent"
+        android:id="@+id/lbl_totalTimeSpent"
+        android:layout_below="@id/lbl_visitAmount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/Label"/>
+
+    <TextView
+        android:layout_toRightOf="@id/StayDummyView"
+        android:id="@+id/lbl_totalTimeSpentValue"
+        android:layout_below="@id/lbl_visitAmountValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue"/>
+
+    <TextView android:id="@+id/lbl_firstVisit"
+        android:layout_below="@id/lbl_totalTimeSpent"
+        android:text="@string/lbl_firstVisit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/StayDummyView" style="@style/Label"/>
+
+    <TextView android:id="@+id/lbl_lastVisit"
+        android:text="@string/lbl_lastVisit"
+        android:layout_below="@+id/lbl_firstVisit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/StayDummyView" style="@style/Label"/>
+
+    <TextView android:id="@+id/lbl_firstVisitValue"
+        android:layout_below="@id/lbl_totalTimeSpentValue"
+        android:layout_toRightOf="@id/StayDummyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue"/>
+
+    <TextView android:id="@+id/lbl_lastVisitValue"
+        android:layout_below="@+id/lbl_firstVisitValue"
+        android:layout_toRightOf="@id/StayDummyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue" />
+
+    <TextView android:id="@+id/lbl_averageVisit"
+        android:text="@string/lbl_averageVisit"
+        android:layout_toLeftOf="@id/StayDummyView"
+        android:layout_below="@id/lbl_lastVisit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/Label" />
+
+    <TextView android:id="@+id/lbl_averageVisitValue"
+        android:layout_toEndOf="@id/StayDummyView"
+        android:layout_toRightOf="@id/StayDummyView"
+        android:layout_below="@id/lbl_lastVisitValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"  style="@style/LabelValue" />
+    </RelativeLayout>
+
+    <ExpandableListView
+        android:layout_above="@+id/btn_closeStayInfoDialog"
+        android:layout_below="@id/staySummary"
+        android:id="@+id/exp_visits"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@id/btn_closeStayInfoDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="@string/btn_closeDialog" />
+
+</RelativeLayout>

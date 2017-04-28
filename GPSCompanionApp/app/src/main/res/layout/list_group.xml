@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?> <!-- Expandable list view header layout -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@color/lightGrey">
+
+    <TextView
+        android:id="@+id/lblListHeader"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/black"
+        android:background="@color/lightGrey"
+        android:paddingLeft="?android:attr/expandableListPreferredItemPaddingLeft"/>
+</RelativeLayout>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <View android:id="@+id/dummyView"
+        android:background="@color/transparent"
+        android:layout_width="0.1dp"
+        android:layout_height="0dp"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView android:id="@+id/lbl_startDateTime"
+        android:text="Start: "
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/dummyView" style="@style/Label"/>
+
+    <TextView android:id="@+id/lbl_endDateTime"
+        android:layout_below="@id/lbl_startDateTime"
+        android:text="End: "
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/dummyView" style="@style/Label"/>
+
+    <TextView android:layout_toRightOf="@id/dummyView"
+        android:layout_alignBaseline="@id/lbl_startDateTime"
+        android:id="@+id/lbl_startDateTimeValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue"/>
+
+    <TextView android:layout_toRightOf="@id/dummyView"
+        android:layout_alignBaseline="@id/lbl_endDateTime"
+        android:layout_below="@id/lbl_startDateTimeValue"
+        android:id="@+id/lbl_endDateTimeValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" style="@style/LabelValue"/>
+
+</RelativeLayout>
