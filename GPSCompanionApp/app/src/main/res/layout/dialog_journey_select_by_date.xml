@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+    <View android:id="@+id/filterDateDummyView"
+        android:layout_centerHorizontal="true"
+        android:layout_width="0.1dp"
+        android:layout_height="0.1dp"/>
+
+    <ListView android:id="@+id/lst_localDates"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" android:layout_above="@+id/btn_viewDates" />
+
+    <Button android:id="@+id/btn_viewDates"
+        android:text="@string/btn_filterByDate"
+        android:layout_toRightOf="@id/filterDateDummyView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_alignParentBottom="true" />
+
+    <Button android:id="@+id/btn_closeDateDialog"
+        android:layout_toLeftOf="@id/filterDateDummyView"
+        android:text="@string/btn_closeDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_alignParentBottom="true" />
+        </RelativeLayout>
+</RelativeLayout>

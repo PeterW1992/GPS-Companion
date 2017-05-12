@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, BluetoothDataClient {
@@ -166,25 +167,62 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 toggleJourneyMode();
                 break;
 
-            case R.id.acbtn_retrieveLatestData:
-                BluetoothDevice raspberryPi;
-                String latestVisit = sqlHelper.getLatestVisitDateTime();
-                String latestJourney = sqlHelper.getLatestJourneyDateTime();
+            case R.id.acbtn_selectByDate:
+                if (dialog != null)
+                    dialog.dismiss();
+                View dateView = getLayoutInflater().inflate(R.layout.dialog_journey_select_by_date, null);
+                final ArrayList<String> datesToShow = new ArrayList<>();
+                final ListView lstDates = (ListView) dateView.findViewById(R.id.lst_localDates);
+                final ArrayAdapter lstAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
 
-                if (latestVisit == null){
-                    latestVisit = "";
-                }
-                if (latestJourney == null){
-                    latestJourney = "";
-                }
-                raspberryPi = getDevice();
-                if (raspberryPi != null){
-                    BluetoothHandler bluetoothHandler = new BluetoothHandler(this,raspberryPi);
-                    bluetoothHandler.retrieveDataAfter(latestVisit, latestJourney);
-                    showLoadingDialog();
-                } else {
-                    Toast.makeText(this, "A Device has not been selected", Toast.LENGTH_LONG).show();
-                }
+                lstDates.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
+                lstAdapter.addAll(sqlHelper.getJourneyDates());
+                lstDates.setAdapter(lstAdapter);
+                Button btnCloseDialog = (Button) dateView.findViewById(R.id.btn_closeDateDialog);
+                btnCloseDialog.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                    }
+                });
+
+                Button btnShowJourneys = (Button) dateView.findViewById(R.id.btn_viewDates);
+                btnShowJourneys.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                        ArrayList<Journey> journeys = sqlHelper.getJourneysForDates(datesToShow);
+
+                        Set<Double> journeyIDs = new HashSet<>();
+
+                        for (Journey aJourney : journeys){
+                            journeyIDs.add(aJourney.getRowid());
+                        }
+                        gpsPoints = sqlHelper.getJourneyPoints(journeyIDs);
+                        System.out.println(journeyIDs.size());
+                        loadData();
+                    }
+                });
+
+                lstDates.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                        String date = (String) lstDates.getItemAtPosition(position);
+                        if (datesToShow.contains(date)) {
+                            datesToShow.remove(date);
+                            view.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
+                        } else {
+                            view.setBackgroundColor(getResources().getColor(R.color.colorAccent));
+                            datesToShow.add(date);
+                        }
+                        System.out.println(date);
+                    }
+                });
+                dialog = new Dialog(this);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.setContentView(dateView);
+                dialog.show();
                 break;
         }
 
@@ -241,7 +279,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (journeySelectMode){
                     journeySelectIDs.add(rowID);
                     if (journeySelectIDs.size() == 2){
-                        // show journeyID
                         showJourneySelectResult(true);
                     }
                 } else {
@@ -269,12 +306,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 String deviceName = device.getName();
-                System.out.println("Bluetooth device found: " + deviceName);
                 foundDevices.put(deviceName, device);
-
-               // if (deviceName.equals("raspberrypi"))
-               //     device.createBond();
-                //mBluetoothAdapter.cancelDiscovery();
             }
 
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
@@ -532,7 +564,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (time != 0 && journeys.size() != 0) {
                 averageTime = time / journeys.size();
             }
-            gpsPoints = sqlHelper.getLocalJourneyPoints(journeyIDs);
+            gpsPoints = sqlHelper.getJourneyPoints(journeyIDs);
             loadData();
             ExpandListViewSingleChildJourneys adapter = new ExpandListViewSingleChildJourneys(this, journeys, fastestTime);
 

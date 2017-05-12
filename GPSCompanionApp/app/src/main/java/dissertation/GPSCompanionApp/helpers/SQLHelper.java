@@ -145,34 +145,18 @@ public class SQLHelper extends SQLiteOpenHelper {
         return uniqueDates;
     }
 
-    public ArrayList<Journey> getJourneysForDate(String date){
-        int i = 0;
+    public ArrayList<Journey> getJourneysForDates(ArrayList<String> dates){
         ArrayList<Journey> journeys = new ArrayList<Journey>();
-        String query = "SELECT rowid,* FROM " + TBL_JOURNEYS + " WHERE " + COL_START + " LIKE '" + date + "%' ORDER BY " + COL_START;
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery(query,null);
-        while (cursor.moveToNext()){
-            double rowid = cursor.getDouble(0);
-            double startPoint = cursor.getDouble(1);
-            double endPoint = cursor.getDouble(2);
-
-            String startDateTime = cursor.getString(3);
-            String endDateTime = cursor.getString(4);
-
-            journeys.add(new Journey(rowid, startPoint,endPoint,startDateTime,endDateTime));
+        String whereClause = "";
+        for (int i = 0; i < dates.size(); i++){
+            whereClause = whereClause + " " + COL_START +  " LIKE '" + dates.get(i) + "%' OR";
         }
-        cursor.close();
-        return journeys;
-    }
-
-
-    public ArrayList<Journey> getLocalJourneysForDate(String date){
-        int i = 0;
-        ArrayList<Journey> journeys = new ArrayList<Journey>();
+        whereClause = whereClause.substring(0, whereClause.length() - 3);
         String query = "SELECT DISTINCT(" + TBL_JOURNEYS + ".rowid)," +  TBL_JOURNEYS + ".* FROM " + TBL_JOURNEYS + " INNER JOIN " +
-                TBL_GPSPOINTS + " ON " + TBL_JOURNEYS + ".rowid = " + TBL_GPSPOINTS + "." + COL_JOURNEYID + " WHERE " + COL_START + " LIKE '" + date + "%' ORDER BY " + COL_START;
+                TBL_GPSPOINTS + " ON " + TBL_JOURNEYS + ".rowid = " + TBL_GPSPOINTS + "." + COL_JOURNEYID + " WHERE " + whereClause + " ORDER BY " + COL_START;
+        System.out.println(query);
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.rawQuery(query,null);
+        Cursor cursor = db.rawQuery(query, null);
         while (cursor.moveToNext()){
             double rowid = cursor.getDouble(0);
             double startPoint = cursor.getDouble(1);
@@ -183,7 +167,6 @@ public class SQLHelper extends SQLiteOpenHelper {
 
             journeys.add(new Journey(rowid, startPoint,endPoint,startDateTime,endDateTime));
         }
-        System.out.println("Journeys for " + date + ": "+  journeys.size());
         cursor.close();
         return journeys;
     }
@@ -229,7 +212,7 @@ public class SQLHelper extends SQLiteOpenHelper {
         return journeys;
     }
 
-    public HashMap<Double, ArrayList<GPSPoint>> getLocalJourneyPoints(Set<Double> ids){
+    public HashMap<Double, ArrayList<GPSPoint>> getJourneyPoints(Set<Double> ids){
         HashMap<Double, ArrayList<GPSPoint>> journeys = new HashMap<>();
         for (Double id : ids){
             ArrayList<GPSPoint> gpsPoints = new ArrayList<>();
