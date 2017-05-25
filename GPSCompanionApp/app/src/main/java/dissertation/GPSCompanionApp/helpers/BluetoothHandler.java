@@ -26,6 +26,7 @@ public class BluetoothHandler {
     OutputStream outputStream;
     UUID uuid;
     Constants.RequestType requestType;
+    public static Long transferStartTime, transferEndTime, processStartTime, processEndTime;
 
     public BluetoothHandler(BluetoothDataClient sender, BluetoothDevice raspberryPi){
         returnTo = sender;
@@ -43,7 +44,6 @@ public class BluetoothHandler {
                 return false;
             }
         } catch (IOException e) {
-            System.out.println("Error in connecting to pi: " + e);
             PostBackError postBackError = new PostBackError();
             postBackError.execute("Error in connecting to pi: " + e);
             e.printStackTrace();
@@ -60,16 +60,7 @@ public class BluetoothHandler {
         params[1] = journeyDate;
         JSONObject jsonObject = createJSONCommand("getDataAfter", params);
         message[0] = jsonObject.toString();
-        bluetoothThread.execute(message);
-    }
-
-    public void retrieveSummary(){
-        System.out.println("Sending command");
-        requestType = Constants.RequestType.RETRIEVE_SUMMARY;
-        BluetoothThread bluetoothThread = new BluetoothThread();
-        String[] message = new String[1];
-        JSONObject jsonObject = createJSONCommand("getSummary", new String[0]);
-        message[0] = jsonObject.toString();
+        transferStartTime = System.currentTimeMillis();
         bluetoothThread.execute(message);
     }
 
@@ -114,10 +105,6 @@ public class BluetoothHandler {
                 processAllData(output);
                 break;
 
-            case RETRIEVE_SUMMARY:
-                processSummary(output);
-                break;
-
             case RETRIEVE_SETTINGS:
                 processSettings(output);
                 break;
@@ -129,10 +116,13 @@ public class BluetoothHandler {
     }
 
     private void processAllData(String output){
+        processStartTime = System.currentTimeMillis();
         ArrayList<StayPoint> stayPoints = new ArrayList<>();
         ArrayList<StayPointVisit> stayPointVisits = new ArrayList<>();
         ArrayList<Journey> journeys = new ArrayList<>();
         ArrayList<GPSPoint> gpsPoints = new ArrayList<>();
+        ArrayList<String> loggerStatus = new ArrayList<>();
+
         HashMap<String,Object> data = new HashMap<>();
 
         try {
@@ -157,16 +147,21 @@ public class BluetoothHandler {
 
                     case "journeyPoints":
                         gpsPoints = processJourneyPoints(jsonReader);
+                        break;
+
+                    case "loggerStatus":
+                        loggerStatus = processSummary(jsonReader);
                 }
             }
         } catch (Exception exception){
             System.out.println(exception);
         }
-
         data.put("StayPoints", stayPoints);
         data.put("StayVisits", stayPointVisits);
         data.put("Journeys", journeys);
         data.put("JourneyPoints", gpsPoints);
+        data.put("LoggerStatus", loggerStatus);
+        processEndTime = System.currentTimeMillis();
         returnTo.returnData(requestType, data);
     }
 
@@ -372,12 +367,10 @@ public class BluetoothHandler {
         return gpsPoints;
     }
 
-    private void processSummary(String output){
+    private ArrayList<String> processSummary(JsonReader jsonReader){
         ArrayList<String> summaryData = new ArrayList<>();
 
         try {
-            JsonReader jsonReader = new JsonReader(new StringReader(output));
-            jsonReader.setLenient(true);
             jsonReader.beginArray();
             while (jsonReader.hasNext()) {
                 jsonReader.beginArray();
@@ -394,7 +387,7 @@ public class BluetoothHandler {
         } catch (Exception e ){
             System.out.println("Error in processSummary: " + e);
         }
-        returnTo.returnData(requestType, summaryData);
+        return summaryData;
     }
 
     private void processSettings(String output){
@@ -457,7 +450,6 @@ public class BluetoothHandler {
                             break;
                         }
                     }
-                    //String output = buffer.toString();
                     returnStr = buffer.toString();
 
                 } catch (IOException e) {
@@ -470,6 +462,7 @@ public class BluetoothHandler {
         @Override
         protected void onPostExecute(String result) {
             if (result != null) {
+                transferEndTime = System.currentTimeMillis();
                 processResponse(result);
             } else {
                 returnError("Null result");

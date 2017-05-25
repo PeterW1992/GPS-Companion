@@ -1,14 +1,9 @@
 package dissertation.GPSCompanionApp.helpers;
 
-import android.bluetooth.BluetoothDevice;
-import android.content.SharedPreferences;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.GregorianCalendar;
-import java.util.HashSet;
 
 /**
  * Created by Peter on 14/01/2017.

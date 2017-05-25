@@ -3,8 +3,6 @@ package dissertation.GPSCompanionApp.activities;
 import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.BluetoothLeScanner;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,7 +12,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -50,35 +47,29 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, BluetoothDataClient {
 
-    SQLHelper sqlHelper;
+    /* Global */
+    DatabaseHandler databaseHandler;
+    HashMap<Double, ArrayList<GPSPoint>> gpsPoints;
+    ArrayList<StayPoint> stayPoints;
+    HashMap<LatLng, Double> stayPointMap;
+    HashMap<String,BluetoothDevice> foundDevices;
+    ArrayList<Double> journeySelectIDs = new ArrayList<>();
+    SharedPreferences sharedPreferences;
+    BluetoothAdapter mBluetoothAdapter;
+    Dialog dialog;
+
+    public boolean journeySelectMode = false;
+    Long updateStartTime, updateEndTime;
+
     int REQUEST_ENABLE_BT = 1;
     MenuItem toolbarMenu;
 
-    HashMap<Double, ArrayList<GPSPoint>> gpsPoints;
-    ArrayList<StayPoint> stayPoints;
-
-    HashMap<LatLng, Double> stayPointMap;
-    String latestDate;
-
-    HashMap<String,BluetoothDevice> foundDevices;
-
-    public boolean journeySelectMode = false;
-    ArrayList<Double> journeySelectIDs = new ArrayList<>();
-
-    SharedPreferences sharedPreferences;
-
-    BluetoothAdapter mBluetoothAdapter;
-
     NavigationView navigationView;
-
     SupportMapFragment mapFragment;
-
-    Dialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.setNavigationItemSelectedListener(this);
 
         sharedPreferences = getSharedPreferences("prefs",MODE_PRIVATE);
-        sqlHelper = new SQLHelper(this);
+        databaseHandler = new DatabaseHandler(this);
 
         navigationView.getHeaderView(0).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,7 +99,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
         loadData();
-
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (!mBluetoothAdapter.isEnabled()){
@@ -176,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 final ArrayAdapter lstAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
 
                 lstDates.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
-                lstAdapter.addAll(sqlHelper.getJourneyDates());
+                lstAdapter.addAll(databaseHandler.getJourneyDates());
                 lstDates.setAdapter(lstAdapter);
                 Button btnCloseDialog = (Button) dateView.findViewById(R.id.btn_closeDateDialog);
                 btnCloseDialog.setOnClickListener(new View.OnClickListener() {
@@ -191,15 +181,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     @Override
                     public void onClick(View v) {
                         dialog.dismiss();
-                        ArrayList<Journey> journeys = sqlHelper.getJourneysForDates(datesToShow);
+                        ArrayList<Journey> journeys = databaseHandler.getJourneysForDates(datesToShow);
 
                         Set<Double> journeyIDs = new HashSet<>();
 
                         for (Journey aJourney : journeys){
                             journeyIDs.add(aJourney.getRowid());
                         }
-                        gpsPoints = sqlHelper.getJourneyPoints(journeyIDs);
-                        System.out.println(journeyIDs.size());
+                        gpsPoints = databaseHandler.getJourneyPoints(journeyIDs);
                         loadData();
                     }
                 });
@@ -234,27 +223,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        BluetoothDevice raspberryPi;
 
         switch (id) {
             case R.id.btn_retrieveLatestData:
-                String latestVisit = sqlHelper.getLatestVisitDateTime();
-                String latestJourney = sqlHelper.getLatestJourneyDateTime();
-
-                if (latestVisit == null){
-                    latestVisit = "";
-                }
-                if (latestJourney == null){
-                    latestJourney = "";
-                }
-                raspberryPi = getDevice();
-                if (raspberryPi != null){
-                    BluetoothHandler bluetoothHandler = new BluetoothHandler(this,raspberryPi);
-                    bluetoothHandler.retrieveDataAfter(latestVisit, latestJourney);
-                    showLoadingDialog();
-                } else {
-                    Toast.makeText(this, "A Device has not been selected", Toast.LENGTH_LONG).show();
-                }
+                retrieveData();
                 break;
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -284,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 } else {
                     showStayPointInfo(rowID);
                 }
-
             }
         });
     }
@@ -323,16 +294,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void loadData(){
         stayPointMap = new HashMap<>();
-        latestDate = sqlHelper.getLatestDateTime();
-        stayPoints = sqlHelper.getStayPoints();
+        stayPoints = databaseHandler.getStayPoints();
 
-        long lastUpdate = sharedPreferences.getLong("lastUpdate", -1);
+        long lastUpdate = databaseHandler.getLatestUpdate();
 
         TextView lblLatestDate = (TextView) navigationView.getHeaderView(0).findViewById(R.id.lbl_latestUpdateDate);
-        int gpsPointCount = sqlHelper.getCountFor(SQLHelper.TBL_GPSPOINTS);
-        int stayPointCount = sqlHelper.getCountFor(SQLHelper.TBL_STAYPOINTS);
-        int stayPointVisitCount =  sqlHelper.getCountFor(SQLHelper.TBL_STAYPOINT_VISITS);
-        int journeyCount = sqlHelper.getCountFor(SQLHelper.TBL_JOURNEYS);
+        int gpsPointCount = databaseHandler.getCountFor(DatabaseHandler.TBL_GPSPOINTS);
+        int stayPointCount = databaseHandler.getCountFor(DatabaseHandler.TBL_STAYPOINTS);
+        int stayPointVisitCount =  databaseHandler.getCountFor(DatabaseHandler.TBL_STAYPOINT_VISITS);
+        int journeyCount = databaseHandler.getCountFor(DatabaseHandler.TBL_JOURNEYS);
 
         Menu menu = navigationView.getMenu();
         menu.getItem(1).setTitle("Stay Points: " + stayPointCount);
@@ -347,6 +317,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             lblLatestDate.setText("Latest update: " + Utils.getDateReadable(gregorianCalendar));
         }
         updateMap();
+    }
+
+    private void retrieveData(){
+        BluetoothDevice raspberryPi;
+        String latestVisit = databaseHandler.getLatestVisitDateTime();
+        String latestJourney = databaseHandler.getLatestJourneyDateTime();
+
+        if (latestVisit == null){
+            latestVisit = "";
+        }
+        if (latestJourney == null){
+            latestJourney = "";
+        }
+        raspberryPi = getDevice();
+        if (raspberryPi != null){
+            updateStartTime = System.currentTimeMillis();
+            BluetoothHandler bluetoothHandler = new BluetoothHandler(this,raspberryPi);
+            bluetoothHandler.retrieveDataAfter(latestVisit, latestJourney);
+            showLoadingDialog();
+        } else {
+            Toast.makeText(this, "A Device has not been selected", Toast.LENGTH_LONG).show();
+        }
     }
 
     public BluetoothDevice getDevice(){
@@ -473,7 +465,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void showStayPointInfo(double rowID){
         if (dialog != null)
             dialog.dismiss();
-        ArrayList<StayPointVisit> visits =  sqlHelper.getStayPointVisitsFor(rowID);
+        ArrayList<StayPointVisit> visits =  databaseHandler.getStayPointVisitsFor(rowID);
         View dialogView = this.getLayoutInflater().inflate(R.layout.dialog_stay_point_info, null);
 
         TextView txtHeader = (TextView) dialogView.findViewById(R.id.lbl_dialogHeader);
@@ -527,7 +519,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         double location1 = journeySelectIDs.get(0);
         double location2 = journeySelectIDs.get(1);
 
-        final ArrayList<Journey> journeys = sqlHelper.getLocalJourneysBetween(location1, location2, uniDirection);
+        final ArrayList<Journey> journeys = databaseHandler.getLocalJourneysBetween(location1, location2, uniDirection);
 
         if (journeys.size() > 0) {
             dialog = new Dialog(this);
@@ -564,7 +556,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             if (time != 0 && journeys.size() != 0) {
                 averageTime = time / journeys.size();
             }
-            gpsPoints = sqlHelper.getJourneyPoints(journeyIDs);
+            gpsPoints = databaseHandler.getJourneyPoints(journeyIDs);
             loadData();
             ExpandListViewSingleChildJourneys adapter = new ExpandListViewSingleChildJourneys(this, journeys, fastestTime);
 
@@ -629,19 +621,26 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         switch (requestType){
 
             case RETRIEVE_ALL_DATA:
+                Long transferDur = BluetoothHandler.transferEndTime - BluetoothHandler.transferStartTime;
+                Long processDur = BluetoothHandler.processEndTime - BluetoothHandler.processStartTime;
+                System.out.println("Transfer duration: " + transferDur / 1000 + ", Process Time: " + processDur / 1000);
+                Long start = System.currentTimeMillis();
                 HashMap<String, Object> listData = (HashMap<String, Object>) data;
                 ArrayList<StayPoint> stayPoints = (ArrayList<StayPoint>) listData.get("StayPoints");
                 ArrayList<StayPointVisit> stayVisits = (ArrayList<StayPointVisit>) listData.get("StayVisits");
                 ArrayList<Journey> journeys = (ArrayList<Journey>) listData.get("Journeys");
                 ArrayList<GPSPoint> gpsPoints = (ArrayList<GPSPoint>) listData.get("JourneyPoints");
-                sqlHelper.addStayPoints(stayPoints);
-                sqlHelper.addStayPointVisits(stayVisits);
-                sqlHelper.addJourneys(journeys);
-                sqlHelper.addJourneyPoints(gpsPoints);
+                ArrayList<String> loggerStatus = (ArrayList<String>) listData.get("LoggerStatus");
+                databaseHandler.addStayPoints(stayPoints);
+                databaseHandler.addStayPointVisits(stayVisits);
+                databaseHandler.addJourneys(journeys);
+                databaseHandler.addJourneyPoints(gpsPoints);
+                databaseHandler.addSummaryData(loggerStatus);
+                Long end = System.currentTimeMillis();
                 dialog.dismiss();
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putLong("lastUpdate", System.currentTimeMillis());
-                editor.commit();
+                System.out.println("Database insert duration: " + (end - start) / 1000);
+                updateEndTime = System.currentTimeMillis();
+                databaseHandler.addUpdate(updateStartTime,updateEndTime);
                 break;
         }
         loadData();
@@ -666,3 +665,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog.show();
     }
 }
+
+
+/*
+
+ArrayList<String> summaryData = (ArrayList<String>) data;
+                String str = "";
+                for (int i = 0; i < summaryData.size(); i++){
+                    str = str + "|" + summaryData.get(i);
+                }
+                str = str.substring(1);
+                SharedPreferences.Editor editor = getSharedPreferences("prefs", MODE_PRIVATE).edit();
+                editor.putString("deviceSummary", str);
+                editor.commit();
+ */

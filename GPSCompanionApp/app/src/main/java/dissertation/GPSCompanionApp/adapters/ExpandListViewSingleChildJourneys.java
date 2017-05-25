@@ -7,21 +7,17 @@ import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import dissertation.GPSCompanionApp.R;
 import dissertation.GPSCompanionApp.helpers.Journey;
-import dissertation.GPSCompanionApp.helpers.SQLHelper;
-import dissertation.GPSCompanionApp.helpers.StayPointVisit;
+import dissertation.GPSCompanionApp.helpers.DatabaseHandler;
 import dissertation.GPSCompanionApp.helpers.Utils;
 
 
 public class ExpandListViewSingleChildJourneys extends BaseExpandableListAdapter {
     private Context _context;
-    public List<Journey> _listData; //Header text is the string key, List<String> is the value data and is a list of all child data
+    private List<Journey> _listData; //Header text is the string key, List<String> is the value data and is a list of all child data
     private long fastestJourney;
 
 
@@ -99,13 +95,13 @@ public class ExpandListViewSingleChildJourneys extends BaseExpandableListAdapter
 
         Journey journey = _listData.get(groupPosition);
 
-        SQLHelper sqlHelper = new SQLHelper(_context);
+        DatabaseHandler databaseHandler = new DatabaseHandler(_context);
 
-        String maxSpeed = Utils.mpsToMph(sqlHelper.getAggForJourney("MAX", "Speed", journey.getRowid()));
-        String avgSpeed = Utils.mpsToMph(sqlHelper.getAggForJourney("AVG", "Speed", journey.getRowid()));
+        String maxSpeed = Utils.mpsToMph(databaseHandler.getAggForJourney("MAX", "Speed", journey.getRowid()));
+        String avgSpeed = Utils.mpsToMph(databaseHandler.getAggForJourney("AVG", "Speed", journey.getRowid()));
 
-        String maxAlt = Utils.formatValue(sqlHelper.getAggForJourney("MAX", "Alt", journey.getRowid()));
-        String avgAlt = Utils.formatValue(sqlHelper.getAggForJourney("AVG", "Alt", journey.getRowid()));
+        String maxAlt = Utils.formatValue(databaseHandler.getAggForJourney("MAX", "Alt", journey.getRowid()));
+        String avgAlt = Utils.formatValue(databaseHandler.getAggForJourney("AVG", "Alt", journey.getRowid()));
 
         long fastestDiff = journey.getDuration() - fastestJourney;
 

@@ -12,50 +12,50 @@ import java.util.Set;
 /**
  * Created by Peter on 14/01/2017.
  */
-public class SQLHelper extends SQLiteOpenHelper {
-    private static int VERSION = 25;
-    private static String DATABASE_NAME = "GPSPoints";
+public class DatabaseHandler extends SQLiteOpenHelper {
+    private static int VERSION = 2;
+    private static String DATABASE_NAME = "GPSLogger";
+
     public static String TBL_GPSPOINTS = "tblGPSPoints", TBL_STAYPOINTS = "tblStayPoints", TBL_STAYPOINT_VISITS = "tblStayPointVisits",
-            TBL_JOURNEYS = "tblJourneys";
-    private String COL_LAT = "Lat";
-    private String COL_LON = "Lon";
-    private String COL_DATETIME = "DateTime";
-    private String COL_ALT = "Alt";
-    private String COL_SPEED = "Speed";
-    private String COL_MODE = "Mode";
-    private String COL_TRACK = "Track";
-    private String PKSTAYPOINTS = " PRIMARY KEY(Lat, Lon))";
+            TBL_JOURNEYS = "tblJourneys", TBL_UPDATES = "tblUpdates", TBL_LOGGER_STATUS = "tblLoggerStatus";
 
-    private String COL_STAYPOINTID = "StayPointID";
-    private String COL_START = "StartDateTime";
-    private String COL_END = "EndDateTime";
-    private String COL_STARTSTAYPOINT = "StartStayPoint";
-    private String COL_ENDSTAYPOINT = "EndStayPoint";
-    private String FK_CONSTRAINT = " PRIMARY KEY(" + COL_START + ") FOREIGN KEY (" + COL_STAYPOINTID + ") REFERENCES " + TBL_STAYPOINTS + "(ROWID))";
+    private String COL_ROWID = "rowid", COL_LAT = "Lat", COL_LON = "Lon", COL_DATETIME = "DateTime", COL_ALT = "Alt", COL_SPEED = "Speed",
+            COL_MODE = "Mode", COL_TRACK = "Track", COL_JOURNEYID = "JourneyId", COL_DATABASE_SIZE = "DatabaseSize", COL_GPS_POINTS = "GPSPoints",
+            COL_STAY_POINTS = "StayPoints", COL_VISITS = "Visits", COL_JOURNEYS = "Journeys", COL_LATEST_POINT = "LatestPoint", COL_OLDEST_POINT = "OldestPoint",
+            COL_LATEST_STAY_UPDATE = "LatestStayUpdate", COL_LATEST_JOURNEY_UPDATE = "LatestJourneyUpdate";
 
-    private String COL_JOURNEYID = "JourneyId";
+    private String COL_STAYPOINTID = "StayPointID", COL_START = "StartDateTime", COL_END = "EndDateTime",
+            COL_STARTSTAYPOINT = "StartStayPoint", COL_ENDSTAYPOINT = "EndStayPoint";
 
-    public SQLHelper(Context context) {
+    private String COL_UPDATE_STARTTIME = "StartTime", COL_UPDATE_ENDTIME = "EndTime";
+
+    public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME,null, VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE " + TBL_GPSPOINTS + " (" +
-                COL_LAT + " REAL, " + COL_LON + " REAL, " +
-                COL_DATETIME + " TEXT PRIMARY KEY, " +
-                COL_ALT + " REAL, " + COL_SPEED + " REAL, " +
-                COL_MODE + " INTEGER, " + COL_TRACK + " REAL, " + COL_JOURNEYID + " INTEGER, FOREIGN KEY (" + COL_JOURNEYID + ") REFERENCES " +  TBL_JOURNEYS + "(rowid))");
+                COL_LAT + " REAL, " + COL_LON + " REAL, " + COL_DATETIME + " TEXT PRIMARY KEY, " + COL_ALT + " REAL, " +
+                COL_SPEED + " REAL, " + COL_MODE + " INTEGER, " + COL_TRACK + " REAL, " + COL_JOURNEYID + " INTEGER," +
+                " FOREIGN KEY (" + COL_JOURNEYID + ") REFERENCES " +  TBL_JOURNEYS + "(rowid))");
 
         db.execSQL("CREATE TABLE " + TBL_STAYPOINTS + " (" +
-                COL_LAT + " REAL, " + COL_LON + " REAL , " + PKSTAYPOINTS);
+                COL_LAT + " REAL, " + COL_LON + " REAL , PRIMARY KEY(Lat, Lon))");
 
         db.execSQL("CREATE TABLE " + TBL_STAYPOINT_VISITS + " (" +
-                COL_STAYPOINTID + " INTEGER, "+ COL_START + " TEXT, " + COL_END + " TEXT," + FK_CONSTRAINT);
+                COL_STAYPOINTID + " INTEGER, "+ COL_START + " TEXT, " + COL_END + " TEXT,  PRIMARY KEY(" + COL_START +
+                ") FOREIGN KEY (" + COL_STAYPOINTID + ") REFERENCES " + TBL_STAYPOINTS + "(ROWID))");
 
         db.execSQL("CREATE TABLE " + TBL_JOURNEYS + "(" + COL_STARTSTAYPOINT + " INTEGER," + COL_ENDSTAYPOINT + " INTEGER, " + COL_START + " TEXT, " + COL_END + " TEXT," +
                 " PRIMARY KEY (" + COL_START + ") FOREIGN KEY (" + COL_STARTSTAYPOINT + ") REFERENCES " + TBL_STAYPOINTS +
-                "(ROWID) FOREIGN KEY (" + COL_ENDSTAYPOINT + ") REFERENCES " + TBL_STAYPOINTS + "(ROWID))" );
+                "(ROWID) FOREIGN KEY (" + COL_ENDSTAYPOINT + ") REFERENCES " + TBL_STAYPOINTS + "(ROWID))");
+
+        db.execSQL("CREATE TABLE " + TBL_UPDATES + "(" + COL_UPDATE_STARTTIME+ " INTEGER," + COL_UPDATE_ENDTIME + " INTEGER)");
+
+        db.execSQL("CREATE TABLE " + TBL_LOGGER_STATUS + "(" + COL_DATABASE_SIZE + " REAL," + COL_GPS_POINTS + " INTEGER,"+ COL_STAY_POINTS + " INTEGER," +
+                COL_VISITS + " INTEGER, "  +  COL_JOURNEYS + " INTEGER," + COL_LATEST_POINT + " TEXT," + COL_OLDEST_POINT + " INTEGER," + COL_LATEST_STAY_UPDATE +
+                " TEXT," + COL_LATEST_JOURNEY_UPDATE + " TEXT)");
     }
 
     @Override
@@ -64,6 +64,7 @@ public class SQLHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TBL_STAYPOINTS);
         db.execSQL("DROP TABLE IF EXISTS " + TBL_STAYPOINT_VISITS);
         db.execSQL("DROP TABLE IF EXISTS " + TBL_JOURNEYS);
+        db.execSQL("DROP TABLE IF EXISTS " + TBL_UPDATES);
         onCreate(db);
     }
 
@@ -71,66 +72,100 @@ public class SQLHelper extends SQLiteOpenHelper {
         if (points != null){
             ContentValues contentValues;
             SQLiteDatabase db = getWritableDatabase();
-            long ptsAdded = 0;
+            db.beginTransaction();
             for (StayPoint point : points){
                 contentValues = new ContentValues();
-                contentValues.put("rowid", point.get_ROW_ID());
-                contentValues.put("Lat",point.get_LAT());
-                contentValues.put("Lon",point.get_LON());
-                if (db.insertWithOnConflict(TBL_STAYPOINTS,null,contentValues,SQLiteDatabase.CONFLICT_IGNORE) > 0){
-                    ptsAdded += 1;
-                }
-        }
-            System.out.println(ptsAdded + " Stay points added to db");
+                contentValues.put(COL_ROWID, point.get_ROW_ID());
+                contentValues.put(COL_LAT,point.get_LAT());
+                contentValues.put(COL_LON,point.get_LON());
+            }
+            db.endTransaction();
         }
     }
 
     public void addStayPointVisits(ArrayList<StayPointVisit> points){
         ContentValues contentValues;
         SQLiteDatabase db = getWritableDatabase();
-        long ptsAdded = 0;
+        db.beginTransaction();
         for (StayPointVisit point : points){
             contentValues = new ContentValues();
-            contentValues.put("StayPointID", point.get_STAYPOINT_ID());
+            contentValues.put(COL_STAYPOINTID, point.get_STAYPOINT_ID());
             contentValues.put(COL_START,point.get_START());
             contentValues.put(COL_END,point.get_END());
-            if (db.insertWithOnConflict(TBL_STAYPOINT_VISITS,null,contentValues,SQLiteDatabase.CONFLICT_IGNORE) > 0){
-                ptsAdded += 1;
-            }
         }
-        System.out.println(ptsAdded + " Stay point visits added to db");
+        db.endTransaction();
     }
 
     public void addJourneys(ArrayList<Journey> journeys){
         SQLiteDatabase db = getWritableDatabase();
         ContentValues contentValues;
+        db.beginTransaction();
         for (Journey journey : journeys){
             contentValues = new ContentValues();
-            contentValues.put("rowid", journey.getRowid());
+            contentValues.put(COL_ROWID, journey.getRowid());
             contentValues.put(COL_STARTSTAYPOINT, journey.getStartPoint());
             contentValues.put(COL_ENDSTAYPOINT, journey.getEndPoint());
             contentValues.put(COL_START, journey.getStartDateTime());
             contentValues.put(COL_END, journey.getEndDateTime());
             db.insertWithOnConflict(TBL_JOURNEYS,null,contentValues,SQLiteDatabase.CONFLICT_IGNORE);
         }
+        db.endTransaction();
     }
 
     public void addJourneyPoints(ArrayList<GPSPoint> gpsPoints){
         ContentValues contentValues;
         SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
         for (GPSPoint point : gpsPoints){
             contentValues = new ContentValues();
-            contentValues.put("rowid", point.get_ROWID());
-            contentValues.put("Lat",point.get_LAT());
-            contentValues.put("Lon",point.get_LON());
-            contentValues.put("dateTime", point.get_dateTime());
-            contentValues.put("Alt",point.get_ALT());
-            contentValues.put("Speed",point.get_SPEED());
-            contentValues.put("Mode",point.get_MODE());
-            contentValues.put("Track",point.get_TRACK());
-            contentValues.put("JourneyID", point.get_JOURNEYID());
+            contentValues.put(COL_ROWID, point.get_ROWID());
+            contentValues.put(COL_LAT,point.get_LAT());
+            contentValues.put(COL_LON,point.get_LON());
+            contentValues.put(COL_DATETIME, point.get_dateTime());
+            contentValues.put(COL_ALT,point.get_ALT());
+            contentValues.put(COL_SPEED,point.get_SPEED());
+            contentValues.put(COL_MODE,point.get_MODE());
+            contentValues.put(COL_TRACK,point.get_TRACK());
+            contentValues.put(COL_JOURNEYID, point.get_JOURNEYID());
             db.insertWithOnConflict(TBL_GPSPOINTS , null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
         }
+        db.endTransaction();
+    }
+
+    public void addUpdate(long start, long end){
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        db.execSQL("INSERT INTO " + TBL_UPDATES + "(" + COL_UPDATE_STARTTIME + ", " + COL_UPDATE_ENDTIME + ") VALUES (" + start + ", " + end + ")");
+        db.endTransaction();
+    }
+
+    public void addSummaryData(ArrayList<String> data){
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        ContentValues contentValues = new ContentValues();
+        if (data != null) {
+            contentValues.put(COL_DATABASE_SIZE, data.get(0));
+            contentValues.put(COL_GPS_POINTS, data.get(1));
+            contentValues.put(COL_STAY_POINTS, data.get(2));
+            contentValues.put(COL_VISITS, data.get(3));
+            contentValues.put(COL_JOURNEYS, data.get(4));
+            contentValues.put(COL_LATEST_POINT, data.get(5));
+            contentValues.put(COL_OLDEST_POINT, data.get(6));
+            contentValues.put(COL_LATEST_STAY_UPDATE, data.get(7));
+            contentValues.put(COL_LATEST_JOURNEY_UPDATE, data.get(8));
+        }
+        db.beginTransaction();
+    }
+
+    public Long getLatestUpdate(){
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        Cursor cursor = db.rawQuery("SELECT MAX(" + COL_UPDATE_STARTTIME + "), " + COL_UPDATE_ENDTIME + " FROM " + TBL_UPDATES, null);
+        cursor.moveToNext();
+        Long startTime = cursor.getLong(0);
+        cursor.close();
+        db.endTransaction();
+        return startTime;
     }
 
     public ArrayList<String> getJourneyDates(){
@@ -146,7 +181,7 @@ public class SQLHelper extends SQLiteOpenHelper {
     }
 
     public ArrayList<Journey> getJourneysForDates(ArrayList<String> dates){
-        ArrayList<Journey> journeys = new ArrayList<Journey>();
+        ArrayList<Journey> journeys = new ArrayList<>();
         String whereClause = "";
         for (int i = 0; i < dates.size(); i++){
             whereClause = whereClause + " " + COL_START +  " LIKE '" + dates.get(i) + "%' OR";
@@ -154,9 +189,9 @@ public class SQLHelper extends SQLiteOpenHelper {
         whereClause = whereClause.substring(0, whereClause.length() - 3);
         String query = "SELECT DISTINCT(" + TBL_JOURNEYS + ".rowid)," +  TBL_JOURNEYS + ".* FROM " + TBL_JOURNEYS + " INNER JOIN " +
                 TBL_GPSPOINTS + " ON " + TBL_JOURNEYS + ".rowid = " + TBL_GPSPOINTS + "." + COL_JOURNEYID + " WHERE " + whereClause + " ORDER BY " + COL_START;
-        System.out.println(query);
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(query, null);
+
         while (cursor.moveToNext()){
             double rowid = cursor.getDouble(0);
             double startPoint = cursor.getDouble(1);
@@ -171,19 +206,6 @@ public class SQLHelper extends SQLiteOpenHelper {
         return journeys;
     }
 
-    public ArrayList<Double> getAllLocalJourneyIds(){
-        ArrayList<Double> journeyIds = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor results = db.rawQuery("SELECT DISTINCT(" + TBL_JOURNEYS + ".rowid) FROM " + TBL_JOURNEYS + " INNER JOIN " + TBL_GPSPOINTS + " ON " +
-                TBL_JOURNEYS + ".rowid = " + TBL_GPSPOINTS + "." + COL_JOURNEYID, null);
-        while (results.moveToNext()){
-            double rowId = results.getDouble(0);
-            journeyIds.add(rowId);
-        }
-        results.close();
-        return journeyIds;
-    }
-
     public ArrayList<Journey> getLocalJourneysBetween(Double id1, Double id2, boolean bothDirections){
         ArrayList<Journey> journeys = new ArrayList<>();
         String query;
@@ -193,7 +215,7 @@ public class SQLHelper extends SQLiteOpenHelper {
                     COL_STARTSTAYPOINT + " = " + id2 + " AND " + COL_ENDSTAYPOINT + " = " + id1 + "  ORDER BY " + COL_START;
         } else {
             query = "SELECT " + TBL_JOURNEYS + ".rowid," + "* FROM " + TBL_JOURNEYS +
-                    " WHERE "+ COL_STARTSTAYPOINT  + " = " + id1 + " AND " + COL_ENDSTAYPOINT +"=" + id2 +"  ORDER BY " + COL_START;
+                    " WHERE " + COL_STARTSTAYPOINT  + " = " + id1 + " AND " + COL_ENDSTAYPOINT + "=" + id2 + "  ORDER BY " + COL_START;
         }
 
         SQLiteDatabase db = getReadableDatabase();
@@ -323,5 +345,7 @@ public class SQLHelper extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + TBL_STAYPOINTS);
         db.execSQL("DELETE FROM " + TBL_STAYPOINT_VISITS);
         db.execSQL("DELETE FROM " + TBL_JOURNEYS);
+        db.execSQL("DELETE FROM " + TBL_UPDATES);
     }
+
 }

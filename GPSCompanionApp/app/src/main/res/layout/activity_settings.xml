@@ -149,16 +149,9 @@
             <Button android:id="@+id/btn_viewEditDeviceSettings"
                 android:text="@string/btn_viewEditDeviceSettings"
                 android:layout_below="@id/lbl_deviceDBJourneyUpdateValue"
-                android:layout_toRightOf="@id/StayDummyView"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <Button android:id="@+id/btn_retrieveSummary"
-                android:text="@string/btn_retrieveSummary"
-                android:layout_toLeftOf="@id/StayDummyView"
-                android:layout_below="@id/lbl_deviceDBJourneyUpdateValue"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true" />
 
         </RelativeLayout>
     </RelativeLayout>

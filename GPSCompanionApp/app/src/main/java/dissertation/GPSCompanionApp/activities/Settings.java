@@ -15,21 +15,19 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
 
 import dissertation.GPSCompanionApp.R;
 import dissertation.GPSCompanionApp.helpers.BluetoothDataClient;
 import dissertation.GPSCompanionApp.helpers.BluetoothHandler;
 import dissertation.GPSCompanionApp.helpers.Constants;
-import dissertation.GPSCompanionApp.helpers.SQLHelper;
+import dissertation.GPSCompanionApp.helpers.DatabaseHandler;
 import dissertation.GPSCompanionApp.helpers.Utils;
 
 public class Settings extends AppCompatActivity implements View.OnClickListener, BluetoothDataClient {
 
-    Button btnClearLocal, btnRetrieveSummary, btnViewEditSettings;
-    SQLHelper sqlHelper;
+    Button btnClearLocal, btnViewEditSettings;
+    DatabaseHandler databaseHandler;
     Dialog dialog;
 
     TextView lblDeviceFileSize, lblDevicePointCount, lblDeviceStayCount, LblDeviceVisitCount,
@@ -40,9 +38,6 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
-        btnRetrieveSummary = (Button) findViewById(R.id.btn_retrieveSummary);
-        btnRetrieveSummary.setOnClickListener(this);
 
         btnClearLocal = (Button) findViewById(R.id.btn_clear_data);
         btnClearLocal.setOnClickListener(this);
@@ -60,12 +55,10 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         lblDeviceStayUpdate = (TextView) findViewById(R.id.lbl_deviceDBStayUpdateValue);
         lblDeviceJourneyUpdate = (TextView) findViewById(R.id.lbl_deviceDBJourneyUpdateValue);
 
-        sqlHelper = new SQLHelper(this);
-
+        databaseHandler = new DatabaseHandler(this);
         dialog = new Dialog(this);
 
         configToolbar();
-        updateDeviceSummary();
     }
 
     private void showLoadingDialog(){
@@ -139,47 +132,9 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         dialog.show();
     }
 
-    private void getDeviceSummary(){
-        showLoadingDialog();
-        BluetoothDevice device = getDevice();
-        if (device != null){
-            BluetoothHandler bluetoothHandler = new BluetoothHandler(this, device);
-            bluetoothHandler.retrieveSummary();
-        }
-    }
-
     private void updateDeviceSettings(String[] settings){
         BluetoothHandler bluetoothHandler = new BluetoothHandler(this, getDevice());
         bluetoothHandler.submitSettings(settings);
-    }
-
-    private void updateDeviceSummary(){
-        SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
-        String data = prefs.getString("deviceSummary", null);
-        if (data != null) {
-            ArrayList<String> summaryData = new ArrayList<>();
-            String[] strArray = data.split("\\|");
-            for (int i = 0; i < strArray.length; i++){
-                summaryData.add(strArray[i]);
-            }
-            lblDeviceFileSize.setText(summaryData.get(0));
-            lblDevicePointCount.setText(summaryData.get(1));
-            lblDeviceStayCount.setText(summaryData.get(2));
-            LblDeviceVisitCount.setText(summaryData.get(3));
-            lblDeviceJourneyCount.setText(summaryData.get(4));
-            String latestPoint = summaryData.get(5);
-            String oldestPoint = summaryData.get(6);
-            String stayUpdate = summaryData.get(7);
-            String journeyUpdate = summaryData.get(8);
-            if (!latestPoint.equals("-"))
-                lblDeviceLatestPoint.setText(Utils.getDateTimeReadable(latestPoint));
-            if (!oldestPoint.equals("-"))
-                lblDeviceOldestPoint.setText(Utils.getDateTimeReadable(oldestPoint));
-            if (!stayUpdate.equals("-"))
-                lblDeviceStayUpdate.setText(Utils.getDateTimeReadable(stayUpdate));
-            if (!journeyUpdate.equals("-"))
-                lblDeviceJourneyUpdate.setText(Utils.getDateTimeReadable(journeyUpdate));
-        }
     }
 
     public BluetoothDevice getDevice(){
@@ -210,14 +165,10 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         switch (v.getId()){
 
             case R.id.btn_clear_data:
-                sqlHelper.clearLocalData();
+                databaseHandler.clearLocalData();
                 break;
 
-            case R.id.btn_retrieveSummary:
-                getDeviceSummary();
-                break;
-
-            case R.id.btn_viewEditDeviceSettings:
+                  case R.id.btn_viewEditDeviceSettings:
                 showLoadingDialog();
                 BluetoothDevice device = getDevice();
                 BluetoothHandler bluetoothHandler = new BluetoothHandler(this, device);
@@ -230,19 +181,6 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
     public void returnData(Constants.RequestType requestType, Object data) {
         dialog.dismiss();
         switch (requestType) {
-
-            case RETRIEVE_SUMMARY:
-                ArrayList<String> summaryData = (ArrayList<String>) data;
-                String str = "";
-                for (int i = 0; i < summaryData.size(); i++){
-                    str = str + "|" + summaryData.get(i);
-                }
-                str = str.substring(1);
-                SharedPreferences.Editor editor = getSharedPreferences("prefs", MODE_PRIVATE).edit();
-                editor.putString("deviceSummary", str);
-                editor.commit();
-                updateDeviceSummary();
-                break;
 
             case RETRIEVE_SETTINGS:
                 ArrayList<String> setting = (ArrayList<String>) data;
