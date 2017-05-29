@@ -1,6 +1,8 @@
 package dissertation.GPSCompanionApp.helpers;
 
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 
 /**
  * Created by Peter on 24/02/2017.
@@ -12,6 +14,7 @@ public class Journey implements Comparable{
     private double endPoint;
     private String startDateTime;
     private String endDateTime;
+    private ArrayList<GPSPoint> journeyPoints;
 
     public Journey(double rowid, double startPoint, double endPoint, String startDateTime, String endDateTime){
         this.rowid = rowid;
@@ -43,6 +46,34 @@ public class Journey implements Comparable{
         return end.getTimeInMillis() - start.getTimeInMillis();
     }
 
+
+
+    public double getRowid() {
+        return rowid;
+    }
+
+    protected void addJourneyPoints(ArrayList<GPSPoint> journeyPoints){
+        this.journeyPoints = new ArrayList<>();
+        this.journeyPoints.addAll(journeyPoints);
+    }
+
+    public ArrayList<GPSPoint> getJourneyPoints(){
+        return journeyPoints;
+    }
+
+    public double getJourneyDistance(){
+        GPSPoint prevPoint = null;
+        Double distance = 0.0;
+        for (int i = 0; i < journeyPoints.size(); i++){
+            GPSPoint gpsPoint = journeyPoints.get(i);
+            if (prevPoint != null){
+                distance += Utils.getDistance(gpsPoint.get_LAT(), gpsPoint.get_LON(), prevPoint.get_LAT(), prevPoint.get_LON());
+            }
+            prevPoint = gpsPoint;
+        }
+        return distance;
+    }
+
     @Override
     public int hashCode() {
         return super.hashCode();
@@ -59,9 +90,5 @@ public class Journey implements Comparable{
     public String toString() {
         long diff = Utils.getGregDateTimeFrom(endDateTime).getTimeInMillis() - Utils.getGregDateTimeFrom(startDateTime).getTimeInMillis();
         return Utils.getTimeReadable(startDateTime) + " - " + Utils.getDurationFormat(diff);
-    }
-
-    public double getRowid() {
-        return rowid;
     }
 }

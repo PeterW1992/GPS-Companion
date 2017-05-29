@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.SharedPreferences;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import dissertation.GPSCompanionApp.R;
 import dissertation.GPSCompanionApp.helpers.BluetoothDataClient;
@@ -56,8 +58,8 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         lblDeviceJourneyUpdate = (TextView) findViewById(R.id.lbl_deviceDBJourneyUpdateValue);
 
         databaseHandler = new DatabaseHandler(this);
+        updateDeviceSummary();
         dialog = new Dialog(this);
-
         configToolbar();
     }
 
@@ -132,6 +134,35 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         dialog.show();
     }
 
+    private void updateDeviceSummary(){
+        SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
+        HashMap<String,String> data = databaseHandler.getLatestSummaryData();
+
+        if (data != null) {
+
+            lblDeviceFileSize.setText(data.get(databaseHandler.COL_DATABASE_SIZE));
+
+            lblDevicePointCount.setText(data.get(databaseHandler.COL_GPS_POINTS));
+            lblDeviceStayCount.setText(data.get(databaseHandler.COL_STAY_POINTS));
+            LblDeviceVisitCount.setText(data.get(databaseHandler.COL_VISITS));
+            lblDeviceJourneyCount.setText(data.get(databaseHandler.COL_JOURNEYS));
+
+            String latestPoint = data.get(databaseHandler.COL_LATEST_POINT);
+            String oldestPoint = data.get(databaseHandler.COL_OLDEST_POINT);
+            String stayUpdate = data.get(databaseHandler.COL_LATEST_STAY_UPDATE);
+            String journeyUpdate = data.get(databaseHandler.COL_LATEST_JOURNEY_UPDATE);
+
+            if (latestPoint != null)
+                lblDeviceLatestPoint.setText(Utils.getDateTimeReadable(latestPoint));
+            if (oldestPoint != null)
+                lblDeviceOldestPoint.setText(Utils.getDateTimeReadable(oldestPoint));
+            if (stayUpdate != null)
+                lblDeviceStayUpdate.setText(Utils.getDateTimeReadable(stayUpdate));
+            if (journeyUpdate != null)
+                lblDeviceJourneyUpdate.setText(Utils.getDateTimeReadable(journeyUpdate));
+        }
+    }
+
     private void updateDeviceSettings(String[] settings){
         BluetoothHandler bluetoothHandler = new BluetoothHandler(this, getDevice());
         bluetoothHandler.submitSettings(settings);
@@ -143,7 +174,7 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         String deviceAddress = sharedPreferences.getString("choosenDevice", null);
         BluetoothDevice mmDevice = null;
         if (deviceAddress != null){
-            mmDevice =  mBluetoothAdapter.getRemoteDevice(deviceAddress);
+            mmDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
         }
         return mmDevice;
     }
@@ -168,7 +199,7 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
                 databaseHandler.clearLocalData();
                 break;
 
-                  case R.id.btn_viewEditDeviceSettings:
+            case R.id.btn_viewEditDeviceSettings:
                 showLoadingDialog();
                 BluetoothDevice device = getDevice();
                 BluetoothHandler bluetoothHandler = new BluetoothHandler(this, device);

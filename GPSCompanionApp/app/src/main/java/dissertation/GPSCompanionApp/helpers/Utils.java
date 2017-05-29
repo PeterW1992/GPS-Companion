@@ -2,8 +2,10 @@ package dissertation.GPSCompanionApp.helpers;
 
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 
 /**
  * Created by Peter on 14/01/2017.
@@ -55,6 +57,14 @@ public class Utils {
         return day + "/" + month + "/" + year;
     }
 
+    public static String getDateFromReadable(String inputStr){
+        String[] fields = inputStr.split("/");
+        String year = fields[2];
+        String month = fields[1];
+        String day = fields[0];
+        return year + "-" + month + "-" + day;
+    }
+
     public static String getDateReadable(GregorianCalendar dateTime){
         int year = dateTime.get(Calendar.YEAR);
         int month = dateTime.get(Calendar.MONTH) + 1;
@@ -103,5 +113,20 @@ public class Utils {
 
     public static String mpsToMph(double mpsValue){
         return formatValue(mpsValue * 2.236936);
+    }
+
+    private static double toRadians(double x){
+            return x * Math.PI / 180;
+    }
+
+    public static double getDistance(double lat1, double lon1, double lat2, double lon2){
+        double R = 6371e3;
+        double p1 = toRadians(lat1);
+        double p2 = toRadians(lat2);
+        double trip = toRadians(lat2 - lat1);
+        double trih = toRadians(lon2 - lon1);
+        double a = Math.sin(trip / 2) * Math.sin(trip / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(trih / 2) * Math.sin(trih / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }

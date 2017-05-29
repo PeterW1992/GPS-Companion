@@ -52,6 +52,10 @@
     <string name="lbl_journeyCount">Journeys:</string>
     <string name="lbl_GPSPointCount">Total Points:</string>
 
+    <string name="lbl_slowSpeed">0 - 20</string>
+    <string name="lbl_mediumSpeed">20 - 40</string>
+    <string name="lbl_highSpeed">40+</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 

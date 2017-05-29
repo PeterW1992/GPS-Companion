@@ -133,6 +133,7 @@ public class BluetoothHandler {
             while (jsonReader.hasNext()){
                 name = jsonReader.nextName();
                 switch (name){
+
                     case "stayVisits":
                         stayPointVisits = processStayVisits(jsonReader);
                         break;

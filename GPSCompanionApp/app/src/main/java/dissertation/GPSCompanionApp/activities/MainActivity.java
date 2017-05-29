@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
@@ -36,24 +37,27 @@ import dissertation.GPSCompanionApp.adapters.*;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, BluetoothDataClient {
 
     /* Global */
     DatabaseHandler databaseHandler;
-    HashMap<Double, ArrayList<GPSPoint>> gpsPoints;
+    ArrayList<Journey> gpsPoints;
     ArrayList<StayPoint> stayPoints;
     HashMap<LatLng, Double> stayPointMap;
     HashMap<String,BluetoothDevice> foundDevices;
@@ -158,60 +162,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 break;
 
             case R.id.acbtn_selectByDate:
-                if (dialog != null)
-                    dialog.dismiss();
-                View dateView = getLayoutInflater().inflate(R.layout.dialog_journey_select_by_date, null);
-                final ArrayList<String> datesToShow = new ArrayList<>();
-                final ListView lstDates = (ListView) dateView.findViewById(R.id.lst_localDates);
-                final ArrayAdapter lstAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
-
-                lstDates.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
-                lstAdapter.addAll(databaseHandler.getJourneyDates());
-                lstDates.setAdapter(lstAdapter);
-                Button btnCloseDialog = (Button) dateView.findViewById(R.id.btn_closeDateDialog);
-                btnCloseDialog.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
-                    }
-                });
-
-                Button btnShowJourneys = (Button) dateView.findViewById(R.id.btn_viewDates);
-                btnShowJourneys.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        dialog.dismiss();
-                        ArrayList<Journey> journeys = databaseHandler.getJourneysForDates(datesToShow);
-
-                        Set<Double> journeyIDs = new HashSet<>();
-
-                        for (Journey aJourney : journeys){
-                            journeyIDs.add(aJourney.getRowid());
-                        }
-                        gpsPoints = databaseHandler.getJourneyPoints(journeyIDs);
-                        loadData();
-                    }
-                });
-
-                lstDates.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                        String date = (String) lstDates.getItemAtPosition(position);
-                        if (datesToShow.contains(date)) {
-                            datesToShow.remove(date);
-                            view.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
-                        } else {
-                            view.setBackgroundColor(getResources().getColor(R.color.colorAccent));
-                            datesToShow.add(date);
-                        }
-                        System.out.println(date);
-                    }
-                });
-                dialog = new Dialog(this);
-                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                dialog.setContentView(dateView);
-                dialog.show();
+                showDateDialog();
                 break;
         }
 
@@ -235,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         googleMap.clear();
         if (gpsPoints != null && gpsPoints.size() > 0){
             addPointsToMap(googleMap);
@@ -360,19 +311,42 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void addPointsToMap(GoogleMap googleMap){
-        for (Double id : gpsPoints.keySet()){
-            ArrayList<LatLng> latLngs = new ArrayList<>();
-            ArrayList<GPSPoint> gpsPointsForID = gpsPoints.get(id);
+        Map<Integer, Integer> speedBrackets = new HashMap<>();
+        speedBrackets.put(0,Color.argb(255,235,140,0)); // 0 to 20 mph
+        speedBrackets.put(1,Color.argb(255,207,96,0)); // 20 to 40 mph
+        speedBrackets.put(2,Color.argb(255,14,128,139)); // 40 to 60 mph
+        Double highest = 0.0;
+        int color = Color.BLACK;
+        for (Journey aJourney : gpsPoints){
+            ArrayList<GPSPoint> gpsPointsForID = aJourney.getJourneyPoints();
             int i = 0;
+            PolylineOptions poly = new PolylineOptions();
+            int prevBracket = -1;
+            int speedBracket = 1;
+            Double speed;
             while (i < gpsPointsForID.size()){
-                latLngs.add(gpsPointsForID.get(i).getLatLng());
+                GPSPoint point = gpsPointsForID.get(i);
+                // 20 Mph = 8.9408, 40 Mph = 17.8816, 60 Mph = 26.8224
+                speed = point.get_SPEED();
+                if (speed != null){
+                    speedBracket = (int) (speed / 8.9408);
+                    if (speed > highest){
+                        highest = speed;
+                    }
+                }
+                if (prevBracket != -1) {
+                    if (speedBracket != prevBracket){
+                        if (speedBrackets.get(prevBracket) != null){
+                            color = speedBrackets.get(prevBracket);
+                        }
+                        poly.add(point.getLatLng());
+                        googleMap.addPolyline(poly.zIndex(5).color(color).width(10));
+                        poly = new PolylineOptions();
+                    }
+                }
+                poly.add(point.getLatLng());
                 i++;
-            }
-            if (latLngs.size() > 0){
-                int middleIndex = latLngs.size() / 2;
-                LatLng middlePoint = latLngs.get(middleIndex);
-                googleMap.addPolyline(new PolylineOptions().addAll(latLngs).zIndex(5));
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(middlePoint,10));
+                prevBracket = speedBracket;
             }
         }
     }
@@ -392,6 +366,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             googleMap.addCircle( new CircleOptions().center(point.getLatLng()).radius(200).strokeColor(strokeColour).fillColor(fillColour).clickable(true).zIndex(10));
             i++;
         }
+
         avgLat = avgLat / stayPoints.size();
         avgLon = avgLon / stayPoints.size();
         LatLng centre = new LatLng(avgLat, avgLon);
@@ -538,7 +513,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             long averageTime = 0;
             long fastestTime = 0;
             long time = 0;
-            Set<Double> journeyIDs = new HashSet<>();
             for (int i = 0; i < journeys.size(); i++) {
                 Journey aJourney = journeys.get(i);
                 if (i == journeys.size() - 1) {
@@ -549,14 +523,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     fastestTime = diff;
                 }
                 time += diff;
-
-                journeyIDs.add(aJourney.getRowid());
             }
 
             if (time != 0 && journeys.size() != 0) {
                 averageTime = time / journeys.size();
             }
-            gpsPoints = databaseHandler.getJourneyPoints(journeyIDs);
+            gpsPoints = databaseHandler.getJourneyPoints(journeys);
             loadData();
             ExpandListViewSingleChildJourneys adapter = new ExpandListViewSingleChildJourneys(this, journeys, fastestTime);
 
@@ -604,6 +576,65 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    private void showDateDialog(){
+        if (dialog != null)
+            dialog.dismiss();
+        View dateView = getLayoutInflater().inflate(R.layout.dialog_journey_select_by_date, null);
+        final ArrayList<String> datesToShow = new ArrayList<>();
+        final ListView lstDates = (ListView) dateView.findViewById(R.id.lst_localDates);
+        final ArrayAdapter lstAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
+
+        for (String date : databaseHandler.getJourneyDates()){
+            lstAdapter.add(Utils.getDateReadable(date));
+        }
+
+        lstDates.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
+        lstDates.setAdapter(lstAdapter);
+        Button btnCloseDialog = (Button) dateView.findViewById(R.id.btn_closeDateDialog);
+        btnCloseDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        Button btnShowJourneys = (Button) dateView.findViewById(R.id.btn_viewDates);
+        btnShowJourneys.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                ArrayList<String> dates = new ArrayList<>();
+                for (String readableDate : datesToShow){
+                    dates.add(Utils.getDateFromReadable(readableDate));
+                }
+
+                ArrayList<Journey> journeys = databaseHandler.getJourneysForDates(dates);
+
+                gpsPoints = databaseHandler.getJourneyPoints(journeys);
+                loadData();
+            }
+        });
+
+        lstDates.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                String date = (String) lstDates.getItemAtPosition(position);
+                if (datesToShow.contains(date)) {
+                    datesToShow.remove(date);
+                    view.setBackgroundColor(getResources().getColor(R.color.backgroundColor));
+                } else {
+                    view.setBackgroundColor(getResources().getColor(R.color.colorAccent));
+                    datesToShow.add(date);
+                }
+            }
+        });
+        dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(dateView);
+        dialog.show();
+    }
+
     private void toggleJourneyMode(){
         journeySelectMode = !journeySelectMode;
         if (journeySelectMode){
@@ -640,7 +671,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 dialog.dismiss();
                 System.out.println("Database insert duration: " + (end - start) / 1000);
                 updateEndTime = System.currentTimeMillis();
-                databaseHandler.addUpdate(updateStartTime,updateEndTime);
+                databaseHandler.addUpdate(updateStartTime, updateEndTime);
                 break;
         }
         loadData();
@@ -665,17 +696,3 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog.show();
     }
 }
-
-
-/*
-
-ArrayList<String> summaryData = (ArrayList<String>) data;
-                String str = "";
-                for (int i = 0; i < summaryData.size(); i++){
-                    str = str + "|" + summaryData.get(i);
-                }
-                str = str.substring(1);
-                SharedPreferences.Editor editor = getSharedPreferences("prefs", MODE_PRIVATE).edit();
-                editor.putString("deviceSummary", str);
-                editor.commit();
- */

@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
+import java.text.NumberFormat;
 import java.util.List;
 
 import dissertation.GPSCompanionApp.R;
@@ -116,7 +117,9 @@ public class ExpandListViewSingleChildJourneys extends BaseExpandableListAdapter
         lblEndTime.setText(Utils.getTimeReadable(journey.getEndDateTime()));
         lblSpeedValues.setText("Max: " + maxSpeed + ", Avg: " + avgSpeed);
         lblAltValues.setText("Max: " + maxAlt + ", Avg: " + avgAlt);
-        lblDiffValues.setText(Utils.getDurationFormat(fastestDiff));
+        NumberFormat numberFormat = NumberFormat.getNumberInstance();
+        numberFormat.setMaximumFractionDigits(1);
+        lblDiffValues.setText(Utils.getDurationFormat(fastestDiff) + numberFormat.format(journey.getJourneyDistance() / 1000) + "km");
 
         return convertView;
     }

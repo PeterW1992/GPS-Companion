@@ -24,4 +24,19 @@
             android:icon="@drawable/gps_point_black"
             android:title="@string/lbl_GPSPointCount"/>
     </group>
+
+    <group>
+        <item android:id="@+id/lbl_slowSpeed"
+            android:icon="@drawable/vector_speed_slow"
+            android:title="@string/lbl_stayPointCount"/>
+
+        <item android:id="@+id/lbl_mediumSpeed"
+            android:icon="@drawable/vector_speed_medium"
+            android:title="@string/lbl_stayPointVisitCount"/>
+
+        <item android:id="@+id/lbl_highSpeed"
+            android:icon="@drawable/vector_speed_high"
+            android:title="@string/lbl_highSpeed"/>
+
+    </group>
 </menu>
