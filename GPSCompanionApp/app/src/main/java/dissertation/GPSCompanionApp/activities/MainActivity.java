@@ -46,6 +46,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     ArrayList<StayPoint> stayPoints;
     HashMap<LatLng, Double> stayPointMap;
     HashMap<String,BluetoothDevice> foundDevices;
-    ArrayList<Double> journeySelectIDs = new ArrayList<>();
+    ArrayList<Double> journeySelectIDs;
     SharedPreferences sharedPreferences;
     BluetoothAdapter mBluetoothAdapter;
     Dialog dialog;
@@ -156,11 +157,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 startActivity(i);
                 return true;
 
-            case R.id.btn_journeySelectMode:
-                journeySelectIDs = new ArrayList<>();
-                toggleJourneyMode();
-                break;
-
             case R.id.acbtn_selectByDate:
                 showDateDialog();
                 break;
@@ -202,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 if (journeySelectMode){
                     journeySelectIDs.add(rowID);
                     if (journeySelectIDs.size() == 2){
-                        showJourneySelectResult(true);
+                        showJourneySelectResult(true, journeySelectIDs.get(0), journeySelectIDs.get(1));
                     }
                 } else {
                     showStayPointInfo(rowID);
@@ -354,8 +350,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void addStayPointsToMap(GoogleMap googleMap){
         int i = 0;
         StayPoint point;
-        double avgLat = 0;
-        double avgLon = 0;
+        double avgLat = 0,  avgLon = 0;
         while (i < stayPoints.size()){
             point = stayPoints.get(i);
             avgLat += point.get_LAT();
@@ -366,6 +361,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             googleMap.addCircle( new CircleOptions().center(point.getLatLng()).radius(200).strokeColor(strokeColour).fillColor(fillColour).clickable(true).zIndex(10));
             i++;
         }
+
+        googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+
+                double closestStayPoint = 9999999;
+                double stayId = -1;
+                for (LatLng stayPoint : stayPointMap.keySet()){
+                    double distance = Utils.getDistance(stayPoint.latitude, stayPoint.longitude , latLng.latitude, latLng.longitude);
+
+                    if (distance < closestStayPoint){
+                        stayId = stayPointMap.get(stayPoint);
+                        closestStayPoint = distance;
+                    }
+                }
+                if (closestStayPoint <= 1000){
+                    Toast.makeText(MainActivity.this, "Journey Selected Activated, select destination", Toast.LENGTH_SHORT).show();
+                    journeySelectMode = true;
+                    journeySelectIDs = new ArrayList<>();
+                    journeySelectIDs.add(stayId);
+
+                }
+            }
+        });
 
         avgLat = avgLat / stayPoints.size();
         avgLon = avgLon / stayPoints.size();
@@ -487,14 +506,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog.show();
     }
 
-    private void showJourneySelectResult(final boolean uniDirection){
+    private void showJourneySelectResult(final boolean uniDirection, double stayId1, double stayId2){
         if (dialog != null)
             dialog.dismiss();
 
-        double location1 = journeySelectIDs.get(0);
-        double location2 = journeySelectIDs.get(1);
-
+        final double location1 = stayId1;
+        final double location2 = stayId2;
         final ArrayList<Journey> journeys = databaseHandler.getLocalJourneysBetween(location1, location2, uniDirection);
+
+        journeySelectMode = false;
 
         if (journeys.size() > 0) {
             dialog = new Dialog(this);
@@ -507,14 +527,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             TextView txtTotalTime = (TextView) dialogView.findViewById(R.id.lbl_journeysTotalTimeValue);
             TextView txtLastJourney = (TextView) dialogView.findViewById(R.id.lbl_lastJourneyValue);
             TextView txtAverageTime = (TextView) dialogView.findViewById(R.id.lbl_averageJourneyTimeValue);
+            TextView txtAverageDist = (TextView) dialogView.findViewById(R.id.lbl_averageJourneyDistanceValue);
 
             String lastJourney = "";
 
+            gpsPoints = databaseHandler.getJourneyPoints(journeys);
             long averageTime = 0;
             long fastestTime = 0;
             long time = 0;
+            double avgDistance = 0;
             for (int i = 0; i < journeys.size(); i++) {
                 Journey aJourney = journeys.get(i);
+                avgDistance += aJourney.getJourneyDistance();
                 if (i == journeys.size() - 1) {
                     lastJourney = aJourney.getStartDateTime();
                 }
@@ -523,12 +547,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     fastestTime = diff;
                 }
                 time += diff;
+                aJourney.getJourneyDistance();
             }
 
             if (time != 0 && journeys.size() != 0) {
                 averageTime = time / journeys.size();
             }
-            gpsPoints = databaseHandler.getJourneyPoints(journeys);
+
+            avgDistance = avgDistance / journeys.size();
+
             loadData();
             ExpandListViewSingleChildJourneys adapter = new ExpandListViewSingleChildJourneys(this, journeys, fastestTime);
 
@@ -536,12 +563,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             txtTotalTime.setText(Utils.getDurationFormat(time));
             txtLastJourney.setText(Utils.getDateReadable(lastJourney));
             txtAverageTime.setText(Utils.getDurationFormat(averageTime));
-            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-                @Override
-                public void onDismiss(DialogInterface dialog) {
-                    toggleJourneyMode();
-                }
-            });
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setMaximumFractionDigits(1);
+            txtAverageDist.setText(numberFormat.format(avgDistance / 1000) + "km");
 
             Button btnCloseDialog = (Button) dialogView.findViewById(R.id.btn_closeJourneyInfoDialog);
             btnCloseDialog.setOnClickListener(new View.OnClickListener() {
@@ -562,7 +586,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             btnToggleDirection.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showJourneySelectResult(!uniDirection);
+                    showJourneySelectResult(!uniDirection, location1, location2);
                 }
             });
 
@@ -571,7 +595,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             dialog.setContentView(dialogView);
             dialog.show();
         } else {
-            toggleJourneyMode();
+            journeySelectMode = false;
             Toast.makeText(this, "No journeys between these locations", Toast.LENGTH_LONG).show();
         }
     }
@@ -633,15 +657,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dateView);
         dialog.show();
-    }
-
-    private void toggleJourneyMode(){
-        journeySelectMode = !journeySelectMode;
-        if (journeySelectMode){
-            toolbarMenu.setIcon(R.drawable.vector_timeline_active);
-        } else {
-            toolbarMenu.setIcon(R.drawable.vector_timeline_normal);
-        }
     }
 
     @Override

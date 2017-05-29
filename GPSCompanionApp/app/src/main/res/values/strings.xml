@@ -73,7 +73,8 @@
     <string name="lbl_selectResultHeader">Journey</string>
     <string name="lbl_speedValues">Speed (mph):</string>
     <string name="lbl_altitudeValues">Altitude (meters):</string>
-    <string name="lbl_timeDiffValues">diff +/-:</string>
+    <string name="lbl_timeDiffValues">Diff +/-:</string>
+    <string name="lbl_distanceValues">Distance:</string>
 
     <!-- Journey info dialog -->
     <string name="lbl_journeyViewHeader">Journey info</string>
@@ -82,6 +83,7 @@
     <string name="lbl_firstJourney">First Journey:</string>
     <string name="lbl_lastJourney">Last Journey:</string>
     <string name="lbl_averageJourneyTime">Average Time:</string>
+    <string name="lbl_averageJourneyDistance">Average Distance:</string>
     <string name="btn_closeJourneyDialog">Close</string>
     <string name="btn_journeyDirectionOneWay">Direction one way</string>
     <string name="btn_journeyDirectionBothWay">Direction both ways</string>

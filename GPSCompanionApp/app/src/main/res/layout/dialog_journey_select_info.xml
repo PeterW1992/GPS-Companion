@@ -69,10 +69,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"  style="@style/LabelValue" />
 
+        <TextView android:id="@+id/lbl_averageJourneyDistance"
+            android:text="@string/lbl_averageJourneyDistance"
+            android:layout_toLeftOf="@id/JourneyDummyView"
+            android:layout_below="@id/lbl_averageJourneyTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" style="@style/Label" />
+        <TextView android:id="@+id/lbl_averageJourneyDistanceValue"
+            android:layout_toEndOf="@id/JourneyDummyView"
+            android:layout_toRightOf="@id/JourneyDummyView"
+            android:layout_below="@id/lbl_averageJourneyTimeValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"  style="@style/LabelValue" />
+
         <Button android:id="@+id/btn_toggleJourneyDirection"
             android:layout_centerHorizontal="true"
             android:text="@string/btn_journeyDirectionOneWay"
-            android:layout_below="@id/lbl_averageJourneyTimeValue"
+            android:layout_below="@id/lbl_averageJourneyDistanceValue"
             android:drawableLeft="@drawable/journey_direction_one_way"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

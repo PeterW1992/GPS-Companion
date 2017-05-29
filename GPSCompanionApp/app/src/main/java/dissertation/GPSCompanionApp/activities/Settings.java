@@ -135,7 +135,6 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
     }
 
     private void updateDeviceSummary(){
-        SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
         HashMap<String,String> data = databaseHandler.getLatestSummaryData();
 
         if (data != null) {

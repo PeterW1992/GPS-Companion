@@ -112,15 +112,16 @@ public class ExpandListViewSingleChildJourneys extends BaseExpandableListAdapter
         TextView lblSpeedValues = (TextView) convertView.findViewById(R.id.lbl_speedStatsValue);
         TextView lblAltValues = (TextView) convertView.findViewById(R.id.lbl_altitudeValuesValue);
         TextView lblDiffValues = (TextView) convertView.findViewById(R.id.lbl_timeDiffValuesValue);
+        TextView lblDistValue = (TextView) convertView.findViewById(R.id.lbl_distanceValueValue);
 
         lblStartTime.setText(Utils.getTimeReadable(journey.getStartDateTime()));
         lblEndTime.setText(Utils.getTimeReadable(journey.getEndDateTime()));
         lblSpeedValues.setText("Max: " + maxSpeed + ", Avg: " + avgSpeed);
         lblAltValues.setText("Max: " + maxAlt + ", Avg: " + avgAlt);
+        lblDiffValues.setText(Utils.getDurationFormat(fastestDiff));
         NumberFormat numberFormat = NumberFormat.getNumberInstance();
         numberFormat.setMaximumFractionDigits(1);
-        lblDiffValues.setText(Utils.getDurationFormat(fastestDiff) + numberFormat.format(journey.getJourneyDistance() / 1000) + "km");
-
+        lblDistValue.setText( numberFormat.format(journey.getJourneyDistance() / 1000) + "km");
         return convertView;
     }
 
