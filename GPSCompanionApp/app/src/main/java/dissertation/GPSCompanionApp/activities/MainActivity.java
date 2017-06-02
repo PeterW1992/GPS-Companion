@@ -175,6 +175,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.btn_retrieveLatestData:
                 retrieveData();
                 break;
+
+            case R.id.btn_loggerStatus:
+                ArrayList<String> loggerData = databaseHandler.getLoggerData();
+                showListDialog(loggerData, "Logger Updates");
+                break;
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -350,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void addStayPointsToMap(GoogleMap googleMap){
         int i = 0;
         StayPoint point;
-        double avgLat = 0,  avgLon = 0;
+        double avgLat = 0, avgLon = 0;
         while (i < stayPoints.size()){
             point = stayPoints.get(i);
             avgLat += point.get_LAT();
@@ -368,6 +373,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                 double closestStayPoint = 9999999;
                 double stayId = -1;
+
                 for (LatLng stayPoint : stayPointMap.keySet()){
                     double distance = Utils.getDistance(stayPoint.latitude, stayPoint.longitude , latLng.latitude, latLng.longitude);
 
@@ -378,10 +384,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
                 if (closestStayPoint <= 1000){
                     Toast.makeText(MainActivity.this, "Journey Selected Activated, select destination", Toast.LENGTH_SHORT).show();
+                    stayPoints = databaseHandler.getRelatedStayPoints(stayId);
+                    updateMap();
                     journeySelectMode = true;
                     journeySelectIDs = new ArrayList<>();
                     journeySelectIDs.add(stayId);
-
                 }
             }
         });
@@ -515,6 +522,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         final ArrayList<Journey> journeys = databaseHandler.getLocalJourneysBetween(location1, location2, uniDirection);
 
         journeySelectMode = false;
+
+        stayPoints = databaseHandler.getStayPoints();
 
         if (journeys.size() > 0) {
             dialog = new Dialog(this);
@@ -656,6 +665,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dateView);
+        dialog.show();
+    }
+
+    private void showListDialog(ArrayList<String> data, String title){
+        if (dialog != null)
+            dialog.dismiss();
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_default_listview, null);
+        final ListView lstDeviceChoice = (ListView) dialogView.findViewById(R.id.lst_defaultList);
+        ArrayAdapter arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1);
+        arrayAdapter.addAll(data);
+
+        lstDeviceChoice.setAdapter(arrayAdapter);
+
+        Button btnCloseDialog = (Button) dialogView.findViewById(R.id.btn_closeListDialog);
+
+        btnCloseDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog = new Dialog(this);
+        dialog.setTitle(title);
+        dialog.setContentView(dialogView);
         dialog.show();
     }
 

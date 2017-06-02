@@ -83,6 +83,28 @@ public class Utils {
         return daysPadded + "/" + monthPadded + "/" + year;
     }
 
+    public static String getDateTimeReadable(GregorianCalendar dateTime){
+        int year = dateTime.get(Calendar.YEAR);
+        int month = dateTime.get(Calendar.MONTH) + 1;
+        int day = dateTime.get(Calendar.DAY_OF_MONTH);
+
+        int hour = dateTime.get(Calendar.HOUR_OF_DAY);
+        int minute = dateTime.get(Calendar.MINUTE);
+        int second = dateTime.get(Calendar.SECOND);
+
+        String monthPadded = Integer.toString(month);
+        if (monthPadded.length() == 1) {
+            monthPadded =  "0" + monthPadded;
+        }
+
+        String daysPadded = Integer.toString(day);
+        if (daysPadded.length() == 1) {
+            daysPadded =  "0" + daysPadded;
+        }
+
+        return + hour + ":" +  minute + ":" + second + " - " + daysPadded + "/" + monthPadded + "/" + year;
+    }
+
     public static String getDurationFormat(long duration){
         long mins = duration / 1000 / 60;
         long hours = mins / 60;

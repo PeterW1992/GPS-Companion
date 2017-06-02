@@ -5,9 +5,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Created by Peter on 14/01/2017.
@@ -180,12 +184,6 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 status.put(cursor.getColumnName(i), cursor.getString(i));
             }
         }
-        /*
-            cursor.getInt(cursor.getColumnIndex(COL_DATABASE_SIZE));
-            cursor.getInt(cursor.getInt(cursor.getColumnIndex(COL_GPS_POINTS)));
-            cursor.getInt(cursor.getInt(cursor.getColumnIndex(COL_STAY_POINTS)));
-            cursor.getInt(cursor.getInt(cursor.getColumnIndex(COL_VISITS)));
-         */
         cursor.close();
         return status;
     }
@@ -311,6 +309,21 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return points;
     }
 
+    public ArrayList<StayPoint> getRelatedStayPoints(double stayPointID){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor results = db.rawQuery("SELECT DISTINCT(" + TBL_STAYPOINTS + "." + COL_ROWID + ")," + COL_LAT + "," + COL_LON + " FROM " + TBL_STAYPOINTS + " LEFT JOIN " + TBL_JOURNEYS + " ON " +
+                        TBL_STAYPOINTS + "." + COL_ROWID + "=" + TBL_JOURNEYS + "." + COL_ENDSTAYPOINT + " WHERE " + COL_STARTSTAYPOINT + "=" + stayPointID + " OR " + COL_ENDSTAYPOINT + "=" + stayPointID, null);
+        ArrayList<StayPoint> points = new ArrayList<>();
+        while (results.moveToNext()){
+            double rowid = results.getDouble(0);
+            double lat = results.getDouble(1);
+            double lon = results.getDouble(2);
+            points.add(new StayPoint(rowid,lat, lon));
+        }
+        results.close();
+        return points;
+    }
+
     public String getLatestVisitDateTime(){
         SQLiteDatabase db = getReadableDatabase();
         Cursor results = db.rawQuery("SELECT MAX(" + COL_START + ") FROM " + TBL_STAYPOINT_VISITS, null);
@@ -340,11 +353,55 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         while (results.moveToNext()){
             String start = results.getString(1);
             String end = results.getString(2);
-            uniqueDates.add( new StayPointVisit(rowid, start, end));
+            uniqueDates.add(new StayPointVisit(rowid, start, end));
         }
         results.close();
         return uniqueDates;
     }
+
+    public ArrayList<String> getUpdateData(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor results = db.rawQuery("SELECT * FROM " + TBL_UPDATES, null);
+        ArrayList<String> updates = new ArrayList<>();
+        while (results.moveToNext()){
+            long startTime = results.getLong(0);
+            long endTime = results.getLong(1);
+            GregorianCalendar gregStart = new GregorianCalendar();
+            gregStart.setTimeInMillis(startTime);
+
+            GregorianCalendar gregEnd = new GregorianCalendar();
+            gregEnd.setTimeInMillis(endTime);
+
+            updates.add(Utils.getDateTimeReadable(gregStart) +  ", " + Utils.getDateTimeReadable(gregEnd));
+        }
+        results.close();
+        return updates;
+    }
+
+    public ArrayList<String> getLoggerData(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor results = db.rawQuery("SELECT * FROM " + TBL_LOGGER_STATUS, null);
+        ArrayList<String> loggerStatus = new ArrayList<>();
+        while (results.moveToNext()){
+            double dbSize = results.getDouble(0);
+            int gpsPoints = results.getInt(1);
+            int stayPoints = results.getInt(2);
+            int visits = results.getInt(3);
+            int journeys = results.getInt(4);
+            String latestPoint = results.getString(5);
+            String oldestPoint = results.getString(6);
+            String latestStayUpdate = results.getString(7);
+            String latestJourneyUpdate = results.getString(8);
+
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setMaximumFractionDigits(2);
+            loggerStatus.add(numberFormat.format(dbSize) +  "MB , " + gpsPoints + ", " + stayPoints + ", " + visits + ", " + journeys +
+                    ", " + Utils.getDateTimeReadable(latestPoint) + ", " + Utils.getDateTimeReadable(oldestPoint) + ", " + Utils.getDateTimeReadable(latestStayUpdate) + ", " + Utils.getDateTimeReadable(latestJourneyUpdate));
+        }
+        results.close();
+        return loggerStatus;
+    }
+
 
     public int getCountFor(String tableName){
         SQLiteDatabase db = getReadableDatabase();
