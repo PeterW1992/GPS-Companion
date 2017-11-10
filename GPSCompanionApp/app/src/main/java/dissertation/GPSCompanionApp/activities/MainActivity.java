@@ -13,6 +13,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.util.SortedList;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -46,8 +48,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import org.w3c.dom.Text;
+
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,7 +68,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     HashMap<LatLng, Double> stayPointMap;
     HashMap<String,BluetoothDevice> foundDevices;
     ArrayList<Double> journeySelectIDs;
-    SharedPreferences sharedPreferences;
     BluetoothAdapter mBluetoothAdapter;
     Dialog dialog;
 
@@ -94,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        sharedPreferences = getSharedPreferences("prefs",MODE_PRIVATE);
         databaseHandler = new DatabaseHandler(this);
 
         navigationView.getHeaderView(0).setOnClickListener(new View.OnClickListener() {
@@ -113,9 +116,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         boolean permissionGranted = ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
-        if(permissionGranted) {
-            // {Some Code}
-        } else {
+        if(!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 200);
         }
 
@@ -175,11 +176,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             case R.id.btn_retrieveLatestData:
                 retrieveData();
                 break;
-
-            case R.id.btn_loggerStatus:
-                ArrayList<String> loggerData = databaseHandler.getLoggerData();
-                showListDialog(loggerData, "Logger Updates");
-                break;
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -187,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public void onMapReady(final GoogleMap googleMap) {
+    public void onMapReady(GoogleMap googleMap) {
         googleMap.clear();
         if (gpsPoints != null && gpsPoints.size() > 0){
             addPointsToMap(googleMap);
@@ -248,6 +244,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         stayPointMap = new HashMap<>();
         stayPoints = databaseHandler.getStayPoints();
 
+        System.out.println("Stay point count: " + stayPoints.size());
+
         long lastUpdate = databaseHandler.getLatestUpdate();
 
         TextView lblLatestDate = (TextView) navigationView.getHeaderView(0).findViewById(R.id.lbl_latestUpdateDate);
@@ -265,7 +263,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (lastUpdate > 0){
             GregorianCalendar gregorianCalendar = new GregorianCalendar();
             gregorianCalendar.setTimeInMillis(lastUpdate);
-
             lblLatestDate.setText("Latest update: " + Utils.getDateReadable(gregorianCalendar));
         }
         updateMap();
@@ -313,11 +310,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void addPointsToMap(GoogleMap googleMap){
         Map<Integer, Integer> speedBrackets = new HashMap<>();
+
+        /*
+        speedBrackets.put(0, R.color.slowSpeed);
+        speedBrackets.put(1, R.color.mediumSpeed);
+        speedBrackets.put(2, R.color.highSpeed);
+        */
+
         speedBrackets.put(0,Color.argb(255,235,140,0)); // 0 to 20 mph
         speedBrackets.put(1,Color.argb(255,207,96,0)); // 20 to 40 mph
         speedBrackets.put(2,Color.argb(255,14,128,139)); // 40 to 60 mph
         Double highest = 0.0;
         int color = Color.BLACK;
+
         for (Journey aJourney : gpsPoints){
             ArrayList<GPSPoint> gpsPointsForID = aJourney.getJourneyPoints();
             int i = 0;
@@ -341,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             color = speedBrackets.get(prevBracket);
                         }
                         poly.add(point.getLatLng());
+
                         googleMap.addPolyline(poly.zIndex(5).color(color).width(10));
                         poly = new PolylineOptions();
                     }
@@ -349,31 +355,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 i++;
                 prevBracket = speedBracket;
             }
+            googleMap.addPolyline(poly);
         }
     }
 
     private void addStayPointsToMap(GoogleMap googleMap){
         int i = 0;
         StayPoint point;
-        double avgLat = 0, avgLon = 0;
+        LatLng reference = null;
+
         while (i < stayPoints.size()){
             point = stayPoints.get(i);
-            avgLat += point.get_LAT();
-            avgLon += point.get_LON();
             int strokeColour = getResources().getColor(R.color.mediumGreen);
             int fillColour = getResources().getColor(R.color.lightGrey);
             stayPointMap.put(point.getLatLng(), point.get_ROW_ID());
             googleMap.addCircle( new CircleOptions().center(point.getLatLng()).radius(200).strokeColor(strokeColour).fillColor(fillColour).clickable(true).zIndex(10));
+            reference = point.getLatLng();
             i++;
         }
-
         googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
 
                 double closestStayPoint = 9999999;
                 double stayId = -1;
-
                 for (LatLng stayPoint : stayPointMap.keySet()){
                     double distance = Utils.getDistance(stayPoint.latitude, stayPoint.longitude , latLng.latitude, latLng.longitude);
 
@@ -392,11 +397,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
         });
-
-        avgLat = avgLat / stayPoints.size();
-        avgLon = avgLon / stayPoints.size();
-        LatLng centre = new LatLng(avgLat, avgLon);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(centre, 10));
+        if (reference != null && journeySelectMode == false) {
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(reference, 10));
+        }
     }
 
     private void updateMap(){
@@ -431,6 +434,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         lstDeviceChoice.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                SharedPreferences sharedPreferences = getSharedPreferences("prefs",MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 String deviceName = lstDeviceChoice.getItemAtPosition(position).toString();
                 BluetoothDevice device = foundDevices.get(deviceName);
@@ -631,6 +635,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         });
 
+        TextView txtHeader = (TextView) dateView.findViewById(R.id.lbl_dialogHeader);
+        txtHeader.setText(R.string.lbl_dateDialogTitle);
         Button btnShowJourneys = (Button) dateView.findViewById(R.id.btn_viewDates);
         btnShowJourneys.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -662,34 +668,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
             }
         });
+
         dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(dateView);
-        dialog.show();
-    }
-
-    private void showListDialog(ArrayList<String> data, String title){
-        if (dialog != null)
-            dialog.dismiss();
-
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_default_listview, null);
-        final ListView lstDeviceChoice = (ListView) dialogView.findViewById(R.id.lst_defaultList);
-        ArrayAdapter arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1);
-        arrayAdapter.addAll(data);
-
-        lstDeviceChoice.setAdapter(arrayAdapter);
-
-        Button btnCloseDialog = (Button) dialogView.findViewById(R.id.btn_closeListDialog);
-
-        btnCloseDialog.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog = new Dialog(this);
-        dialog.setTitle(title);
-        dialog.setContentView(dialogView);
         dialog.show();
     }
 

@@ -34,6 +34,7 @@
     <string name="btn_cancel">Cancel</string>
 
     <!-- Filter by date dialog -->
+    <string name="lbl_dateDialogTitle">Select Dates</string>
     <string name="btn_filterByDate">Show journeys</string>
 
     <!-- Device settings Dialog -->
@@ -52,8 +53,8 @@
     <string name="lbl_journeyCount">Journeys:</string>
     <string name="lbl_GPSPointCount">Total Points:</string>
 
-    <string name="lbl_slowSpeed">0 - 20</string>
-    <string name="lbl_mediumSpeed">20 - 40</string>
+    <string name="lbl_slowSpeed">0 - 19</string>
+    <string name="lbl_mediumSpeed">20 - 39</string>
     <string name="lbl_highSpeed">40+</string>
 
     <string name="btn_updateLog">View Update Log</string>

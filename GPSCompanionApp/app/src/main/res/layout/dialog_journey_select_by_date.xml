@@ -11,9 +11,13 @@
         android:layout_width="0.1dp"
         android:layout_height="0.1dp"/>
 
+        <TextView android:id="@+id/lbl_dialogHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" style="@style/Header"/>
+
     <ListView android:id="@+id/lst_localDates"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" android:layout_above="@+id/btn_viewDates" />
+        android:layout_height="match_parent" android:layout_below="@id/lbl_dialogHeader" android:layout_above="@+id/btn_viewDates" />
 
     <Button android:id="@+id/btn_viewDates"
         android:text="@string/btn_filterByDate"

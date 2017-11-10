@@ -7,9 +7,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <TextView android:id="@+id/lbl_dialogHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" style="@style/Header"/>
+
     <ListView android:id="@+id/lst_defaultList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" android:layout_above="@+id/btn_closeListDialog" />
+        android:layout_height="match_parent" android:layout_below="@id/lbl_dialogHeader" android:layout_above="@+id/btn_closeListDialog" />
 
     <Button android:id="@+id/btn_closeListDialog"
         android:text="@string/btn_closeDialog"

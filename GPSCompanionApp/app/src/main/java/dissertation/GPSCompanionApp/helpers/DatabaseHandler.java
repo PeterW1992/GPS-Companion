@@ -380,7 +380,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public ArrayList<String> getLoggerData(){
         SQLiteDatabase db = getReadableDatabase();
-        Cursor results = db.rawQuery("SELECT * FROM " + TBL_LOGGER_STATUS, null);
+        Cursor results = db.rawQuery("SELECT * FROM " + TBL_LOGGER_STATUS + " ORDER BY " + COL_LATEST_POINT, null);
         ArrayList<String> loggerStatus = new ArrayList<>();
         while (results.moveToNext()){
             double dbSize = results.getDouble(0);
@@ -389,14 +389,13 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             int visits = results.getInt(3);
             int journeys = results.getInt(4);
             String latestPoint = results.getString(5);
-            String oldestPoint = results.getString(6);
             String latestStayUpdate = results.getString(7);
             String latestJourneyUpdate = results.getString(8);
 
             NumberFormat numberFormat = NumberFormat.getNumberInstance();
             numberFormat.setMaximumFractionDigits(2);
-            loggerStatus.add(numberFormat.format(dbSize) +  "MB , " + gpsPoints + ", " + stayPoints + ", " + visits + ", " + journeys +
-                    ", " + Utils.getDateTimeReadable(latestPoint) + ", " + Utils.getDateTimeReadable(oldestPoint) + ", " + Utils.getDateTimeReadable(latestStayUpdate) + ", " + Utils.getDateTimeReadable(latestJourneyUpdate));
+            loggerStatus.add(numberFormat.format(dbSize) +  " MB ," + gpsPoints + ", " + stayPoints + ", " + visits + ", " + journeys +
+                    ", " + Utils.getDateTimeReadable(latestPoint) + ", " + Utils.getDateTimeReadable(latestStayUpdate) + ", " + Utils.getDateTimeReadable(latestJourneyUpdate));
         }
         results.close();
         return loggerStatus;

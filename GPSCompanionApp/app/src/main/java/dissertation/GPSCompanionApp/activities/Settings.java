@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,7 +29,7 @@ import dissertation.GPSCompanionApp.helpers.Utils;
 
 public class Settings extends AppCompatActivity implements View.OnClickListener, BluetoothDataClient {
 
-    Button btnClearLocal, btnViewEditSettings;
+    Button btnClearLocal, btnViewEditSettings, btnLoggerStatus;
     DatabaseHandler databaseHandler;
     Dialog dialog;
 
@@ -46,6 +47,9 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
 
         btnViewEditSettings = (Button) findViewById(R.id.btn_viewEditDeviceSettings);
         btnViewEditSettings.setOnClickListener(this);
+
+        btnLoggerStatus = (Button) findViewById(R.id.btn_loggerStatus);
+        btnLoggerStatus.setOnClickListener(this);
 
         lblDeviceFileSize = (TextView) findViewById(R.id.lbl_deviceDBSizeValue);
         lblDevicePointCount = (TextView) findViewById(R.id.lbl_deviceDBPointCountValue);
@@ -134,6 +138,32 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         dialog.show();
     }
 
+    private void showListDialog(ArrayList<String> data, String title){
+        if (dialog != null)
+            dialog.dismiss();
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_default_listview, null);
+        final ListView lstDeviceChoice = (ListView) dialogView.findViewById(R.id.lst_defaultList);
+        ArrayAdapter arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1);
+        arrayAdapter.addAll(data);
+
+        lstDeviceChoice.setAdapter(arrayAdapter);
+
+        Button btnCloseDialog = (Button) dialogView.findViewById(R.id.btn_closeListDialog);
+        TextView txtTitle = (TextView) dialogView.findViewById(R.id.lbl_dialogHeader);
+        txtTitle.setText(title);
+
+        btnCloseDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog = new Dialog(this);
+        dialog.setContentView(dialogView);
+        dialog.show();
+    }
+
     private void updateDeviceSummary(){
         HashMap<String,String> data = databaseHandler.getLatestSummaryData();
 
@@ -196,6 +226,11 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
 
             case R.id.btn_clear_data:
                 databaseHandler.clearLocalData();
+                break;
+
+            case R.id.btn_loggerStatus:
+                ArrayList<String> loggerData = databaseHandler.getLoggerData();
+                showListDialog(loggerData, "Logger Updates");
                 break;
 
             case R.id.btn_viewEditDeviceSettings:

@@ -17,6 +17,7 @@
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:text="@string/btn_clear_data"
+        android:drawableLeft="@drawable/vector_delete_black"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" android:layout_below="@id/my_toolbar" />
 
@@ -146,9 +147,17 @@
                 android:layout_height="wrap_content"
                 android:layout_toRightOf="@id/StayDummyView" style="@style/LabelValue"/>
 
+            <Button android:id="@+id/btn_loggerStatus"
+                android:text="@string/btn_loggerStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/logger_summary_history_black"
+                android:layout_below="@id/lbl_deviceDBJourneyUpdateValue"/>
+
             <Button android:id="@+id/btn_viewEditDeviceSettings"
                 android:text="@string/btn_viewEditDeviceSettings"
-                android:layout_below="@id/lbl_deviceDBJourneyUpdateValue"
+                android:drawableLeft="@drawable/vector_settings_black"
+                android:layout_below="@id/btn_loggerStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true" />

@@ -9,8 +9,37 @@
     tools:context="dissertation.GPSCompanionApp.activities.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <LinearLayout android:id="@+id/tbl_speedView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+            <TextView android:id="@+id/txt_slowSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:layout_weight="1"
+                android:text="@string/lbl_slowSpeed" android:background="@color/slowSpeed"/>
+
+            <TextView android:id="@+id/txt_mediumSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:layout_weight="1"
+                android:text="@string/lbl_mediumSpeed" android:background="@color/mediumSpeed"/>
+
+            <TextView android:id="@+id/txt_highSpeed"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:layout_weight="1"
+                android:text="@string/lbl_highSpeed" android:background="@color/highSpeed"/>
+
+    </LinearLayout>
+    
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
+        android:layout_below="@id/tbl_speedView"
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"

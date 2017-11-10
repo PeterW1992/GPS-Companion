@@ -378,6 +378,9 @@ public class BluetoothHandler {
                 String data = "-";
                 if (jsonReader.peek() == JsonToken.STRING) {
                     data = jsonReader.nextString();
+                    if (data.equals("None")){
+                        data = null;
+                    }
                 } else {
                     jsonReader.skipValue();
                 }
