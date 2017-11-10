@@ -5,21 +5,25 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Created by Peter on 14/01/2017.
  */
 public class DatabaseHandler extends SQLiteOpenHelper {
-    private static int VERSION = 2;
+    private static int VERSION = 3;
     private static String DATABASE_NAME = "GPSLogger";
 
     public static String TBL_GPSPOINTS = "tblGPSPoints", TBL_STAYPOINTS = "tblStayPoints", TBL_STAYPOINT_VISITS = "tblStayPointVisits",
             TBL_JOURNEYS = "tblJourneys", TBL_UPDATES = "tblUpdates", TBL_LOGGER_STATUS = "tblLoggerStatus";
 
-    private String COL_ROWID = "rowid", COL_LAT = "Lat", COL_LON = "Lon", COL_DATETIME = "DateTime", COL_ALT = "Alt", COL_SPEED = "Speed",
+    public String COL_ROWID = "rowid", COL_LAT = "Lat", COL_LON = "Lon", COL_DATETIME = "DateTime", COL_ALT = "Alt", COL_SPEED = "Speed",
             COL_MODE = "Mode", COL_TRACK = "Track", COL_JOURNEYID = "JourneyId", COL_DATABASE_SIZE = "DatabaseSize", COL_GPS_POINTS = "GPSPoints",
             COL_STAY_POINTS = "StayPoints", COL_VISITS = "Visits", COL_JOURNEYS = "Journeys", COL_LATEST_POINT = "LatestPoint", COL_OLDEST_POINT = "OldestPoint",
             COL_LATEST_STAY_UPDATE = "LatestStayUpdate", COL_LATEST_JOURNEY_UPDATE = "LatestJourneyUpdate";
@@ -72,34 +76,40 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (points != null){
             ContentValues contentValues;
             SQLiteDatabase db = getWritableDatabase();
-            db.beginTransaction();
+            db.beginTransactionNonExclusive();
             for (StayPoint point : points){
                 contentValues = new ContentValues();
                 contentValues.put(COL_ROWID, point.get_ROW_ID());
                 contentValues.put(COL_LAT,point.get_LAT());
                 contentValues.put(COL_LON,point.get_LON());
+                db.insertWithOnConflict(TBL_STAYPOINTS, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
             }
+            db.setTransactionSuccessful();
             db.endTransaction();
+            db.close();
         }
     }
 
     public void addStayPointVisits(ArrayList<StayPointVisit> points){
         ContentValues contentValues;
         SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
+        db.beginTransactionNonExclusive();
         for (StayPointVisit point : points){
             contentValues = new ContentValues();
             contentValues.put(COL_STAYPOINTID, point.get_STAYPOINT_ID());
             contentValues.put(COL_START,point.get_START());
             contentValues.put(COL_END,point.get_END());
+            db.insertWithOnConflict(TBL_STAYPOINT_VISITS, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
         }
+        db.setTransactionSuccessful();
         db.endTransaction();
+        db.close();
     }
 
     public void addJourneys(ArrayList<Journey> journeys){
         SQLiteDatabase db = getWritableDatabase();
         ContentValues contentValues;
-        db.beginTransaction();
+        db.beginTransactionNonExclusive();
         for (Journey journey : journeys){
             contentValues = new ContentValues();
             contentValues.put(COL_ROWID, journey.getRowid());
@@ -109,13 +119,16 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             contentValues.put(COL_END, journey.getEndDateTime());
             db.insertWithOnConflict(TBL_JOURNEYS,null,contentValues,SQLiteDatabase.CONFLICT_IGNORE);
         }
+        db.setTransactionSuccessful();
         db.endTransaction();
+        db.close();
     }
 
     public void addJourneyPoints(ArrayList<GPSPoint> gpsPoints){
+        System.out.println("Amount of points: " + gpsPoints.size());
         ContentValues contentValues;
         SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
+        db.beginTransactionNonExclusive();
         for (GPSPoint point : gpsPoints){
             contentValues = new ContentValues();
             contentValues.put(COL_ROWID, point.get_ROWID());
@@ -129,19 +142,22 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             contentValues.put(COL_JOURNEYID, point.get_JOURNEYID());
             db.insertWithOnConflict(TBL_GPSPOINTS , null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
         }
+        db.setTransactionSuccessful();
         db.endTransaction();
+        db.close();
     }
 
     public void addUpdate(long start, long end){
         SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
+        db.beginTransactionNonExclusive();
         db.execSQL("INSERT INTO " + TBL_UPDATES + "(" + COL_UPDATE_STARTTIME + ", " + COL_UPDATE_ENDTIME + ") VALUES (" + start + ", " + end + ")");
+        db.setTransactionSuccessful();
         db.endTransaction();
     }
 
     public void addSummaryData(ArrayList<String> data){
         SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
+        db.beginTransactionNonExclusive();
         ContentValues contentValues = new ContentValues();
         if (data != null) {
             contentValues.put(COL_DATABASE_SIZE, data.get(0));
@@ -153,18 +169,31 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             contentValues.put(COL_OLDEST_POINT, data.get(6));
             contentValues.put(COL_LATEST_STAY_UPDATE, data.get(7));
             contentValues.put(COL_LATEST_JOURNEY_UPDATE, data.get(8));
+            db.insertWithOnConflict(TBL_LOGGER_STATUS, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
         }
-        db.beginTransaction();
+        db.setTransactionSuccessful();
+        db.endTransaction();
+    }
+
+    public HashMap<String, String> getLatestSummaryData(){
+        SQLiteDatabase db = getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT MAX(" + COL_ROWID + "), * FROM " + TBL_LOGGER_STATUS, null);
+        HashMap<String,String> status = new HashMap<>();
+        while (cursor.moveToNext()){
+            for (int i = 0; i < cursor.getColumnCount() - 1; i++){
+                status.put(cursor.getColumnName(i), cursor.getString(i));
+            }
+        }
+        cursor.close();
+        return status;
     }
 
     public Long getLatestUpdate(){
         SQLiteDatabase db = getWritableDatabase();
-        db.beginTransaction();
         Cursor cursor = db.rawQuery("SELECT MAX(" + COL_UPDATE_STARTTIME + "), " + COL_UPDATE_ENDTIME + " FROM " + TBL_UPDATES, null);
         cursor.moveToNext();
         Long startTime = cursor.getLong(0);
         cursor.close();
-        db.endTransaction();
         return startTime;
     }
 
@@ -234,22 +263,20 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return journeys;
     }
 
-    public HashMap<Double, ArrayList<GPSPoint>> getJourneyPoints(Set<Double> ids){
-        HashMap<Double, ArrayList<GPSPoint>> journeys = new HashMap<>();
-        for (Double id : ids){
+    public ArrayList<Journey> getJourneyPoints(ArrayList<Journey> journeys){
+        for (Journey aJourney : journeys){
             ArrayList<GPSPoint> gpsPoints = new ArrayList<>();
-            String query = "SELECT " + COL_LAT + ", " + COL_LON  + " FROM " + TBL_GPSPOINTS +
-                    " WHERE " + COL_JOURNEYID  + " = " + id + "  ORDER BY " + COL_DATETIME;
+            String query = "SELECT " + COL_LAT + ", " + COL_LON + ", " + COL_SPEED  + " FROM " + TBL_GPSPOINTS +
+                    " WHERE " + COL_JOURNEYID  + " = " + aJourney.getRowid() + "  ORDER BY " + COL_DATETIME;
             SQLiteDatabase db = getReadableDatabase();
             Cursor cursor = db.rawQuery(query,null);
             while (cursor.moveToNext()){
                 double lat = cursor.getDouble(0);
                 double lon = cursor.getDouble(1);
-
-                gpsPoints.add(new GPSPoint(lat,lon));
+                double speed = cursor.getDouble(2);
+                gpsPoints.add(new GPSPoint(lat,lon,speed));
             }
-
-            journeys.put(id, gpsPoints);
+            aJourney.addJourneyPoints(gpsPoints);
             cursor.close();
         }
         return journeys;
@@ -282,15 +309,19 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return points;
     }
 
-    public String getLatestDateTime(){
+    public ArrayList<StayPoint> getRelatedStayPoints(double stayPointID){
         SQLiteDatabase db = getReadableDatabase();
-        Cursor results = db.rawQuery("SELECT MAX(" + COL_DATETIME + ") FROM " + TBL_GPSPOINTS, null);
-        String dateTime  = null;
+        Cursor results = db.rawQuery("SELECT DISTINCT(" + TBL_STAYPOINTS + "." + COL_ROWID + ")," + COL_LAT + "," + COL_LON + " FROM " + TBL_STAYPOINTS + " LEFT JOIN " + TBL_JOURNEYS + " ON " +
+                        TBL_STAYPOINTS + "." + COL_ROWID + "=" + TBL_JOURNEYS + "." + COL_ENDSTAYPOINT + " WHERE " + COL_STARTSTAYPOINT + "=" + stayPointID + " OR " + COL_ENDSTAYPOINT + "=" + stayPointID, null);
+        ArrayList<StayPoint> points = new ArrayList<>();
         while (results.moveToNext()){
-            dateTime = results.getString(0);
+            double rowid = results.getDouble(0);
+            double lat = results.getDouble(1);
+            double lon = results.getDouble(2);
+            points.add(new StayPoint(rowid,lat, lon));
         }
         results.close();
-        return dateTime;
+        return points;
     }
 
     public String getLatestVisitDateTime(){
@@ -322,11 +353,54 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         while (results.moveToNext()){
             String start = results.getString(1);
             String end = results.getString(2);
-            uniqueDates.add( new StayPointVisit(rowid, start, end));
+            uniqueDates.add(new StayPointVisit(rowid, start, end));
         }
         results.close();
         return uniqueDates;
     }
+
+    public ArrayList<String> getUpdateData(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor results = db.rawQuery("SELECT * FROM " + TBL_UPDATES, null);
+        ArrayList<String> updates = new ArrayList<>();
+        while (results.moveToNext()){
+            long startTime = results.getLong(0);
+            long endTime = results.getLong(1);
+            GregorianCalendar gregStart = new GregorianCalendar();
+            gregStart.setTimeInMillis(startTime);
+
+            GregorianCalendar gregEnd = new GregorianCalendar();
+            gregEnd.setTimeInMillis(endTime);
+
+            updates.add(Utils.getDateTimeReadable(gregStart) +  ", " + Utils.getDateTimeReadable(gregEnd));
+        }
+        results.close();
+        return updates;
+    }
+
+    public ArrayList<String> getLoggerData(){
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor results = db.rawQuery("SELECT * FROM " + TBL_LOGGER_STATUS + " ORDER BY " + COL_LATEST_POINT, null);
+        ArrayList<String> loggerStatus = new ArrayList<>();
+        while (results.moveToNext()){
+            double dbSize = results.getDouble(0);
+            int gpsPoints = results.getInt(1);
+            int stayPoints = results.getInt(2);
+            int visits = results.getInt(3);
+            int journeys = results.getInt(4);
+            String latestPoint = results.getString(5);
+            String latestStayUpdate = results.getString(7);
+            String latestJourneyUpdate = results.getString(8);
+
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setMaximumFractionDigits(2);
+            loggerStatus.add(numberFormat.format(dbSize) +  " MB ," + gpsPoints + ", " + stayPoints + ", " + visits + ", " + journeys +
+                    ", " + Utils.getDateTimeReadable(latestPoint) + ", " + Utils.getDateTimeReadable(latestStayUpdate) + ", " + Utils.getDateTimeReadable(latestJourneyUpdate));
+        }
+        results.close();
+        return loggerStatus;
+    }
+
 
     public int getCountFor(String tableName){
         SQLiteDatabase db = getReadableDatabase();
@@ -346,6 +420,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL("DELETE FROM " + TBL_STAYPOINT_VISITS);
         db.execSQL("DELETE FROM " + TBL_JOURNEYS);
         db.execSQL("DELETE FROM " + TBL_UPDATES);
+        db.execSQL("DELETE FROM " + TBL_LOGGER_STATUS);
     }
 
 }

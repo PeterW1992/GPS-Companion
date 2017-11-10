@@ -16,4 +16,9 @@
     <color name="darkerLightGrey">#D7D8D8</color>
     <color name="lighterGrey">#F8F9F9</color>
     <color name="errorRed">#ff0033</color>
+
+    <color name="slowSpeed">#FFEB8C00</color>
+    <color name="mediumSpeed">#FFCF6000</color>
+    <color name="highSpeed">#FF0E808B</color>
+
 </resources>

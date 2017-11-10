@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.SharedPreferences;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -11,11 +12,13 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import dissertation.GPSCompanionApp.R;
 import dissertation.GPSCompanionApp.helpers.BluetoothDataClient;
@@ -26,7 +29,7 @@ import dissertation.GPSCompanionApp.helpers.Utils;
 
 public class Settings extends AppCompatActivity implements View.OnClickListener, BluetoothDataClient {
 
-    Button btnClearLocal, btnViewEditSettings;
+    Button btnClearLocal, btnViewEditSettings, btnLoggerStatus;
     DatabaseHandler databaseHandler;
     Dialog dialog;
 
@@ -45,6 +48,9 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         btnViewEditSettings = (Button) findViewById(R.id.btn_viewEditDeviceSettings);
         btnViewEditSettings.setOnClickListener(this);
 
+        btnLoggerStatus = (Button) findViewById(R.id.btn_loggerStatus);
+        btnLoggerStatus.setOnClickListener(this);
+
         lblDeviceFileSize = (TextView) findViewById(R.id.lbl_deviceDBSizeValue);
         lblDevicePointCount = (TextView) findViewById(R.id.lbl_deviceDBPointCountValue);
         lblDeviceStayCount = (TextView) findViewById(R.id.lbl_deviceDBStayCountValue);
@@ -56,8 +62,8 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         lblDeviceJourneyUpdate = (TextView) findViewById(R.id.lbl_deviceDBJourneyUpdateValue);
 
         databaseHandler = new DatabaseHandler(this);
+        updateDeviceSummary();
         dialog = new Dialog(this);
-
         configToolbar();
     }
 
@@ -132,6 +138,60 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         dialog.show();
     }
 
+    private void showListDialog(ArrayList<String> data, String title){
+        if (dialog != null)
+            dialog.dismiss();
+
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_default_listview, null);
+        final ListView lstDeviceChoice = (ListView) dialogView.findViewById(R.id.lst_defaultList);
+        ArrayAdapter arrayAdapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1);
+        arrayAdapter.addAll(data);
+
+        lstDeviceChoice.setAdapter(arrayAdapter);
+
+        Button btnCloseDialog = (Button) dialogView.findViewById(R.id.btn_closeListDialog);
+        TextView txtTitle = (TextView) dialogView.findViewById(R.id.lbl_dialogHeader);
+        txtTitle.setText(title);
+
+        btnCloseDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog = new Dialog(this);
+        dialog.setContentView(dialogView);
+        dialog.show();
+    }
+
+    private void updateDeviceSummary(){
+        HashMap<String,String> data = databaseHandler.getLatestSummaryData();
+
+        if (data != null) {
+
+            lblDeviceFileSize.setText(data.get(databaseHandler.COL_DATABASE_SIZE));
+
+            lblDevicePointCount.setText(data.get(databaseHandler.COL_GPS_POINTS));
+            lblDeviceStayCount.setText(data.get(databaseHandler.COL_STAY_POINTS));
+            LblDeviceVisitCount.setText(data.get(databaseHandler.COL_VISITS));
+            lblDeviceJourneyCount.setText(data.get(databaseHandler.COL_JOURNEYS));
+
+            String latestPoint = data.get(databaseHandler.COL_LATEST_POINT);
+            String oldestPoint = data.get(databaseHandler.COL_OLDEST_POINT);
+            String stayUpdate = data.get(databaseHandler.COL_LATEST_STAY_UPDATE);
+            String journeyUpdate = data.get(databaseHandler.COL_LATEST_JOURNEY_UPDATE);
+
+            if (latestPoint != null)
+                lblDeviceLatestPoint.setText(Utils.getDateTimeReadable(latestPoint));
+            if (oldestPoint != null)
+                lblDeviceOldestPoint.setText(Utils.getDateTimeReadable(oldestPoint));
+            if (stayUpdate != null)
+                lblDeviceStayUpdate.setText(Utils.getDateTimeReadable(stayUpdate));
+            if (journeyUpdate != null)
+                lblDeviceJourneyUpdate.setText(Utils.getDateTimeReadable(journeyUpdate));
+        }
+    }
+
     private void updateDeviceSettings(String[] settings){
         BluetoothHandler bluetoothHandler = new BluetoothHandler(this, getDevice());
         bluetoothHandler.submitSettings(settings);
@@ -143,7 +203,7 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
         String deviceAddress = sharedPreferences.getString("choosenDevice", null);
         BluetoothDevice mmDevice = null;
         if (deviceAddress != null){
-            mmDevice =  mBluetoothAdapter.getRemoteDevice(deviceAddress);
+            mmDevice = mBluetoothAdapter.getRemoteDevice(deviceAddress);
         }
         return mmDevice;
     }
@@ -168,7 +228,12 @@ public class Settings extends AppCompatActivity implements View.OnClickListener,
                 databaseHandler.clearLocalData();
                 break;
 
-                  case R.id.btn_viewEditDeviceSettings:
+            case R.id.btn_loggerStatus:
+                ArrayList<String> loggerData = databaseHandler.getLoggerData();
+                showListDialog(loggerData, "Logger Updates");
+                break;
+
+            case R.id.btn_viewEditDeviceSettings:
                 showLoadingDialog();
                 BluetoothDevice device = getDevice();
                 BluetoothHandler bluetoothHandler = new BluetoothHandler(this, device);

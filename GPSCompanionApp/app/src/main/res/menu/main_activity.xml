@@ -7,11 +7,6 @@
         app:showAsAction="always"
         android:title="@string/btn_recentData" />
 
-    <item android:id="@+id/btn_journeySelectMode"
-        android:icon="@drawable/vector_timeline_normal"
-        app:showAsAction="always"
-        android:title="@string/btn_journeySelectMode"/>
-
     <item android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"

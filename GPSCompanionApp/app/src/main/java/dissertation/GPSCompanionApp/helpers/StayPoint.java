@@ -1,12 +1,14 @@
 package dissertation.GPSCompanionApp.helpers;
 
+import android.support.annotation.NonNull;
+
 import com.google.android.gms.maps.model.LatLng;
 
 /**
  * Created by Peter on 02/02/2017.
  */
 
-public class StayPoint {
+public class StayPoint implements Comparable{
     private double _LAT;
     private double _LON;
     private double _ROW_ID;
@@ -31,5 +33,21 @@ public class StayPoint {
 
     public double get_ROW_ID() {
         return _ROW_ID;
+    }
+
+    @Override
+    public int hashCode(){
+        String hash = _ROW_ID + _LAT + _LON + "";
+        return hash.hashCode();
+    }
+
+    @Override
+    public int compareTo(@NonNull Object o) {
+        StayPoint other = (StayPoint) o;
+        if (get_ROW_ID() == other.get_ROW_ID()){
+            return 0;
+        } else {
+            return -1;
+        }
     }
 }

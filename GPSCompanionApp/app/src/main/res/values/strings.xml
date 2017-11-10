@@ -34,6 +34,7 @@
     <string name="btn_cancel">Cancel</string>
 
     <!-- Filter by date dialog -->
+    <string name="lbl_dateDialogTitle">Select Dates</string>
     <string name="btn_filterByDate">Show journeys</string>
 
     <!-- Device settings Dialog -->
@@ -52,6 +53,13 @@
     <string name="lbl_journeyCount">Journeys:</string>
     <string name="lbl_GPSPointCount">Total Points:</string>
 
+    <string name="lbl_slowSpeed">0 - 19</string>
+    <string name="lbl_mediumSpeed">20 - 39</string>
+    <string name="lbl_highSpeed">40+</string>
+
+    <string name="btn_updateLog">View Update Log</string>
+    <string name="btn_loggerStatus">View Logger Status</string>
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
@@ -69,7 +77,8 @@
     <string name="lbl_selectResultHeader">Journey</string>
     <string name="lbl_speedValues">Speed (mph):</string>
     <string name="lbl_altitudeValues">Altitude (meters):</string>
-    <string name="lbl_timeDiffValues">diff +/-:</string>
+    <string name="lbl_timeDiffValues">Diff +/-:</string>
+    <string name="lbl_distanceValues">Distance:</string>
 
     <!-- Journey info dialog -->
     <string name="lbl_journeyViewHeader">Journey info</string>
@@ -78,6 +87,7 @@
     <string name="lbl_firstJourney">First Journey:</string>
     <string name="lbl_lastJourney">Last Journey:</string>
     <string name="lbl_averageJourneyTime">Average Time:</string>
+    <string name="lbl_averageJourneyDistance">Average Distance:</string>
     <string name="btn_closeJourneyDialog">Close</string>
     <string name="btn_journeyDirectionOneWay">Direction one way</string>
     <string name="btn_journeyDirectionBothWay">Direction both ways</string>

@@ -133,6 +133,7 @@ public class BluetoothHandler {
             while (jsonReader.hasNext()){
                 name = jsonReader.nextName();
                 switch (name){
+
                     case "stayVisits":
                         stayPointVisits = processStayVisits(jsonReader);
                         break;
@@ -377,6 +378,9 @@ public class BluetoothHandler {
                 String data = "-";
                 if (jsonReader.peek() == JsonToken.STRING) {
                     data = jsonReader.nextString();
+                    if (data.equals("None")){
+                        data = null;
+                    }
                 } else {
                     jsonReader.skipValue();
                 }

@@ -34,6 +34,12 @@ public class GPSPoint {
         this._LON = lon;
     }
 
+    public GPSPoint(double lat, double lon, double speed){
+        this._LAT = lat;
+        this._LON = lon;
+        this._SPEED = speed;
+    }
+
     public LatLng getLatLng(){
         return new LatLng(_LAT, _LON);
     }
