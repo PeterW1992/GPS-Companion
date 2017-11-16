@@ -244,8 +244,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         stayPointMap = new HashMap<>();
         stayPoints = databaseHandler.getStayPoints();
 
-        System.out.println("Stay point count: " + stayPoints.size());
-
         long lastUpdate = databaseHandler.getLatestUpdate();
 
         TextView lblLatestDate = (TextView) navigationView.getHeaderView(0).findViewById(R.id.lbl_latestUpdateDate);
@@ -282,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         raspberryPi = getDevice();
         if (raspberryPi != null){
             updateStartTime = System.currentTimeMillis();
-            BluetoothHandler bluetoothHandler = new BluetoothHandler(this,raspberryPi);
+            BluetoothHandler bluetoothHandler = new BluetoothHandler(this, raspberryPi);
             bluetoothHandler.retrieveDataAfter(latestVisit, latestJourney);
             showLoadingDialog();
         } else {
